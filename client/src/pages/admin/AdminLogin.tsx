@@ -28,7 +28,7 @@ export const AdminLogin: React.FC = () => {
 
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl max-w-md w-full p-8 space-y-6">
+      <div className="bg-[#FCFAF7] rounded-3xl border border-slate-200/90 shadow-xl max-w-md w-full p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
             <ShieldCheck className="w-7 h-7" />
@@ -86,7 +86,7 @@ export const AdminLogin: React.FC = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md shadow-indigo-100 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] hover:brightness-105 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md shadow-amber-900/15 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
           >
             <span>{submitting ? 'Authenticating...' : 'Sign In to Dashboard'}</span>
             <ArrowRight className="w-4 h-4" />

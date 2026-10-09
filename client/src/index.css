@@ -5,28 +5,47 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #FAF7F2;
+    color: #34281E;
   }
 
   h1, h2, h3, .font-serif {
     font-family: 'Cinzel', Georgia, serif;
+    letter-spacing: -0.01em;
   }
 }
 
-/* Custom scrollbar */
+/* Luxury Gold & Beige Utilities */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #A17619 0%, #C39626 40%, #835D12 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #B88924 0%, #C39626 50%, #A17619 100%);
+}
+
+.bg-beige-surface {
+  background-color: #FAF7F2;
+}
+
+/* Custom luxury scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #FAF7F2;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #D5C5B2;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #B29F89;
 }
+

@@ -71,7 +71,7 @@ export const CheckBooking: React.FC = () => {
       </div>
 
       {/* Search Input Box */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm max-w-xl mx-auto">
+      <div className="bg-[#FCFAF7] p-5 rounded-2xl border border-slate-200 shadow-sm max-w-xl mx-auto">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -91,7 +91,7 @@ export const CheckBooking: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition shadow-sm"
+            className="px-6 py-2.5 bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] hover:brightness-105 text-white font-semibold text-sm rounded-xl transition shadow-sm shadow-amber-900/10"
           >
             Track Status
           </button>
@@ -101,7 +101,7 @@ export const CheckBooking: React.FC = () => {
       {loading && <LoadingSpinner message="Searching booking record..." />}
 
       {booking && !loading && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-lg p-6 sm:p-8 space-y-6">
+        <div className="bg-[#FCFAF7] rounded-3xl border border-slate-200/90 shadow-lg p-6 sm:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
             <div>
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">

@@ -229,7 +229,7 @@ export const HallDetail: React.FC = () => {
                 type="button"
                 onClick={handleProceedToBooking}
                 disabled={!selectedSlot || !selectedSlot.available}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center space-x-2 text-base active:scale-95 cursor-pointer"
+                className="w-full bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] hover:brightness-105 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-amber-900/15 transition-all flex items-center justify-center space-x-2 text-base active:scale-95 cursor-pointer"
               >
                 <span>Proceed to Book Slot</span>
                 <ArrowRight className="w-5 h-5" />

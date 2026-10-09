@@ -313,7 +313,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ hall, date, slot }) =>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 shadow-md shadow-indigo-950 flex items-center justify-center space-x-2 text-base cursor-pointer"
+          className="w-full mt-4 bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] hover:brightness-105 disabled:opacity-50 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 shadow-md shadow-amber-950/20 flex items-center justify-center space-x-2 text-base cursor-pointer"
         >
           {isSubmitting ? (
             <span>Processing Reservation...</span>

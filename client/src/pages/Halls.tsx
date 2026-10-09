@@ -56,7 +56,7 @@ export const Halls: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
+      <div className="bg-[#FCFAF7] p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div className="relative">

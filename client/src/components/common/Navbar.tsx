@@ -17,12 +17,12 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+    <nav className="bg-[#FCFAF7]/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 shadow-sm shadow-slate-900/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#835D12] via-[#A17619] to-[#C39626] flex items-center justify-center text-white shadow-md shadow-amber-900/15 group-hover:scale-105 transition-transform">
               <Castle className="w-6 h-6" />
             </div>
             <div>
@@ -92,7 +92,7 @@ export const Navbar: React.FC = () => {
 
             <Link
               to="/halls"
-              className="inline-flex items-center justify-center bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-indigo-300 transition-all active:scale-95"
+              className="inline-flex items-center justify-center bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-amber-900/15 hover:shadow-lg hover:shadow-amber-900/20 hover:brightness-105 transition-all active:scale-95"
             >
               Book a Venue
             </Link>
