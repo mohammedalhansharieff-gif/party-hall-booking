@@ -118,8 +118,12 @@ export const sendBookingCancelledEmail = async (data: BookingEmailData & { reaso
   await sendMail(data.customerEmail, subject, html);
 };
 
-export const sendLoginOtpEmail = async (to: string, otp: string, name?: string) => {
-  const subject = `🔐 Your GrandVenues Login Verification Code: ${otp}`;
+export const sendLoginOtpEmail = async (
+  to: string,
+  otp: string,
+  name?: string
+): Promise<{ success: boolean; error?: string }> => {
+  const subject = `🔐 Your GrandVenues Verification Code: ${otp}`;
   const html = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #16120D; color: #FAF7F2; padding: 32px; border-radius: 16px; border: 1px solid rgba(231, 202, 112, 0.3);">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -128,18 +132,18 @@ export const sendLoginOtpEmail = async (to: string, otp: string, name?: string) 
       </div>
       <p style="font-size: 15px; color: #EFE8DC;">Hello ${name ? `<strong>${name}</strong>` : 'there'},</p>
       <p style="font-size: 14px; color: #D5C8B4; line-height: 1.6;">
-        You recently initiated a login to your GrandVenues account. Please use the 6-digit verification code below to complete your sign-in:
+        You recently initiated verification for your GrandVenues account. Please use the 6-digit verification code below:
       </p>
       <div style="background: rgba(195, 150, 38, 0.12); border: 2px dashed #E7CA70; border-radius: 12px; padding: 20px; text-align: center; margin: 28px 0;">
         <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #FAF7F2; display: inline-block;">
           ${otp}
         </span>
         <p style="font-size: 11px; color: #E7CA70; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; margin-bottom: 0;">
-          Expires in 10 minutes
+          Expires in 5 minutes
         </p>
       </div>
       <p style="font-size: 12px; color: #A69B88; line-height: 1.5;">
-        Once verified, you will stay securely logged in on this browser without needing to enter the code again. If you did not request this login, please ignore this email.
+        Once verified, you will stay securely logged in without needing to enter the code again on every refresh. If you did not request this code, please ignore this email.
       </p>
       <hr style="border: 0; border-top: 1px solid rgba(231, 202, 112, 0.2); margin: 24px 0;" />
       <p style="font-size: 11px; color: #7A6F5D; text-align: center; margin: 0;">
@@ -148,11 +152,15 @@ export const sendLoginOtpEmail = async (to: string, otp: string, name?: string) 
     </div>
   `;
 
-  await sendMail(to, subject, html);
+  return await sendMail(to, subject, html);
 };
 
-const sendMail = async (to: string, subject: string, html: string) => {
-  if (transporter) {
+const sendMail = async (
+  to: string,
+  subject: string,
+  html: string
+): Promise<{ success: boolean; error?: string }> => {
+  if (transporter && ENV.EMAIL_USER && ENV.EMAIL_PASS && ENV.EMAIL_USER !== 'youremail@gmail.com') {
     try {
       await transporter.sendMail({
         from: `"GrandVenues Concierge" <${ENV.EMAIL_USER}>`,
@@ -160,14 +168,13 @@ const sendMail = async (to: string, subject: string, html: string) => {
         subject,
         html,
       });
-      console.log(`[Email Sent via SMTP] To: ${to} | Subject: ${subject}`);
-    } catch (err) {
-      console.error('[Email Error - Falling back to console simulation]', err);
+      console.log(`[SMTP] ✅ Email sent to ${to} | Subject: ${subject}`);
+      return { success: true };
+    } catch (err: any) {
+      console.error('[SMTP Error]', err.message);
+      return { success: false, error: `SMTP error: ${err.message}` };
     }
   } else {
-    console.log(`\n================== [EMAIL SIMULATOR] ==================`);
-    console.log(`To: ${to}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`=======================================================\n`);
+    return { success: false, error: 'SMTP credentials not configured' };
   }
 };

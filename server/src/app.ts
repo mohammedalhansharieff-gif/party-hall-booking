@@ -16,6 +16,7 @@ import {
   handleAdminLogin,
   handleAdminLogout,
   handleRegister,
+  handleInitiateRegister,
   handleInitiateLogin,
   handleVerifyOtp,
   handleResendOtp,
@@ -82,6 +83,7 @@ app.get('/api/health', (_req, res) => {
 
 // Auth aliases according to plan specification (/api/auth/login)
 app.post('/api/auth/send-otp', validateRequest(adminLoginSchema), handleInitiateLogin);
+app.post('/api/auth/register-otp', validateRequest(registerSchema), handleInitiateRegister);
 app.post('/api/auth/verify-otp', validateRequest(verifyOtpSchema), handleVerifyOtp);
 app.post('/api/auth/resend-otp', validateRequest(resendOtpSchema), handleResendOtp);
 app.post('/api/auth/login', validateRequest(adminLoginSchema), handleAdminLogin);

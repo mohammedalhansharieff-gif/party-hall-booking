@@ -9,6 +9,15 @@ export const initiateLogin = async (
   return res.data;
 };
 
+export const initiateSignup = async (
+  name: string,
+  email: string,
+  password: string
+): Promise<{ success: boolean; requiresOtp: boolean; message: string; email: string; name?: string; isSignUp?: boolean }> => {
+  const res = await api.post('/auth/register-otp', { name, email, password });
+  return res.data;
+};
+
 export const verifyOtp = async (
   email: string,
   otp: string

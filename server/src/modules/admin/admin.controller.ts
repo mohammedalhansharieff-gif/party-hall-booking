@@ -6,7 +6,7 @@ import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 export const handleInitiateLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    const { email: userEmail, name, otp } = await adminService.validateCredentialsAndSendOtp(email, password);
+    const { email: userEmail, name } = await adminService.validateCredentialsAndSendOtp(email, password);
 
     return res.json({
       success: true,
@@ -19,7 +19,34 @@ export const handleInitiateLogin = async (req: Request, res: Response, next: Nex
     if (error.message === 'Invalid email or password') {
       return res.status(401).json({ success: false, message: error.message });
     }
-    next(error);
+    return res.status(error.statusCode || 502).json({
+      success: false,
+      message: error.message || 'Failed to dispatch verification code to Gmail',
+    });
+  }
+};
+
+export const handleInitiateRegister = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, email, password } = req.body;
+    const result = await adminService.initiateSignupAndSendOtp(name, email, password);
+
+    return res.json({
+      success: true,
+      requiresOtp: true,
+      isSignUp: true,
+      message: `A 6-digit verification code has been sent to ${result.email}`,
+      email: result.email,
+      name: result.name,
+    });
+  } catch (error: any) {
+    if (error.message && error.message.includes('already exists')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
+    return res.status(error.statusCode || 502).json({
+      success: false,
+      message: error.message || 'Failed to dispatch registration verification code to Gmail',
+    });
   }
 };
 
@@ -48,7 +75,7 @@ export const handleVerifyOtp = async (req: Request, res: Response, next: NextFun
 export const handleResendOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;
-    const { email: userEmail, otp } = await adminService.resendOtpForUser(email);
+    const { email: userEmail } = await adminService.resendOtpForUser(email);
 
     return res.json({
       success: true,
@@ -56,7 +83,13 @@ export const handleResendOtp = async (req: Request, res: Response, next: NextFun
       email: userEmail,
     });
   } catch (error: any) {
-    return res.status(400).json({ success: false, message: error.message });
+    if (error.message && (error.message.includes('No active') || error.message.includes('No account'))) {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+    return res.status(error.statusCode || 502).json({
+      success: false,
+      message: error.message || 'Failed to resend verification code to Gmail',
+    });
   }
 };
 

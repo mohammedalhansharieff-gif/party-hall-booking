@@ -4,7 +4,7 @@ import { prisma } from '../../config/db';
 import { ENV } from '../../config/env';
 import { formatHall } from '../halls/hall.service';
 import { sendBookingConfirmedEmail, sendBookingCancelledEmail } from '../../services/email.service';
-import { createAndSendOtp, verifyOtpCode } from '../../services/otp.service';
+import { createAndSendOtp, verifyOtpCode, getOtpEntry } from '../../services/otp.service';
 
 export const validateCredentialsAndSendOtp = async (email: string, password: string) => {
   const admin = await prisma.adminUser.findUnique({
@@ -27,7 +27,7 @@ export const validateCredentialsAndSendOtp = async (email: string, password: str
     role: admin.role,
   };
 
-  const otp = await createAndSendOtp(admin.email, user);
+  const otp = await createAndSendOtp(admin.email, user, 'LOGIN');
 
   return {
     email: admin.email,
@@ -36,14 +36,64 @@ export const validateCredentialsAndSendOtp = async (email: string, password: str
   };
 };
 
-export const verifyOtpAndGenerateToken = async (email: string, otp: string) => {
-  const result = verifyOtpCode(email, otp);
+export const initiateSignupAndSendOtp = async (name: string, email: string, password: string) => {
+  const normalizedEmail = email.toLowerCase().trim();
+  const existingUser = await prisma.adminUser.findUnique({
+    where: { email: normalizedEmail },
+  });
 
-  if (!result.success || !result.user) {
+  if (existingUser) {
+    throw new Error('An account with this email already exists. Please log in.');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash(password, salt);
+
+  const otp = await createAndSendOtp(
+    normalizedEmail,
+    { email: normalizedEmail, name: name.trim(), role: 'USER' },
+    'SIGNUP',
+    passwordHash
+  );
+
+  return {
+    email: normalizedEmail,
+    name: name.trim(),
+    otp,
+  };
+};
+
+export const verifyOtpAndGenerateToken = async (email: string, otp: string) => {
+  const result = await verifyOtpCode(email, otp);
+
+  if (!result.success) {
     throw new Error(result.error || 'Invalid verification code');
   }
 
-  const user = result.user;
+  let user = result.user;
+
+  // If this was a signup verification, create the user in database now!
+  if (result.type === 'SIGNUP' && result.pendingUser) {
+    const created = await prisma.adminUser.create({
+      data: {
+        name: result.pendingUser.name,
+        email: result.pendingUser.email,
+        passwordHash: result.pendingUser.passwordHash,
+        role: 'USER',
+      },
+    });
+
+    user = {
+      id: created.id,
+      email: created.email,
+      name: created.name,
+      role: created.role,
+    };
+  }
+
+  if (!user) {
+    throw new Error('User profile could not be resolved');
+  }
 
   const token = jwt.sign(
     {
@@ -68,26 +118,32 @@ export const verifyOtpAndGenerateToken = async (email: string, otp: string) => {
 };
 
 export const resendOtpForUser = async (email: string) => {
+  const normalizedEmail = email.toLowerCase().trim();
+  const cached = getOtpEntry(normalizedEmail);
   const admin = await prisma.adminUser.findUnique({
-    where: { email: email.toLowerCase().trim() },
+    where: { email: normalizedEmail },
   });
 
-  if (!admin) {
-    throw new Error('No account found with this email');
+  if (!admin && !cached) {
+    throw new Error('No active verification session or account found for this email');
   }
 
-  const user = {
-    id: admin.id,
-    email: admin.email,
-    name: admin.name,
-    role: admin.role,
-  };
+  const name = admin?.name || cached?.userData.name || 'Valued Guest';
+  const role = admin?.role || cached?.userData.role || 'USER';
+  const id = admin?.id || cached?.userData.id || 0;
+  const type = cached?.type || (admin ? 'LOGIN' : 'SIGNUP');
+  const pendingPasswordHash = cached?.pendingUser?.passwordHash;
 
-  const otp = await createAndSendOtp(admin.email, user);
+  const otp = await createAndSendOtp(
+    normalizedEmail,
+    { id, email: normalizedEmail, name, role },
+    type,
+    pendingPasswordHash
+  );
 
   return {
-    email: admin.email,
-    name: admin.name,
+    email: normalizedEmail,
+    name,
     otp,
   };
 };

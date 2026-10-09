@@ -56,6 +56,11 @@ export const App: React.FC = () => {
     );
   }
 
+  // If user is already logged in and navigates to login/signup, redirect to main application
+  if (token && isAuthPage) {
+    return <Navigate to="/" replace />;
+  }
+
   // If visiting the auth page standalone (login / signup)
   if (isAuthPage) {
     return (

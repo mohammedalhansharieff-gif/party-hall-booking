@@ -4,6 +4,7 @@ import {
   adminLogin as apiLogin,
   userSignup as apiSignup,
   initiateLogin as apiInitiateLogin,
+  initiateSignup as apiInitiateSignup,
   verifyOtp as apiVerifyOtp,
   resendOtp as apiResendOtp,
   adminLogout as apiLogout,
@@ -15,6 +16,7 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   requestLoginOtp: (email: string, pass: string) => Promise<{ success: boolean; email: string; name?: string; message?: string }>;
+  requestSignupOtp: (name: string, email: string, pass: string) => Promise<{ success: boolean; email: string; name?: string; message?: string }>;
   verifyLoginOtp: (email: string, otp: string) => Promise<void>;
   resendLoginOtp: (email: string) => Promise<{ success: boolean; message?: string }>;
   login: (email: string, pass: string) => Promise<void>;
@@ -49,6 +51,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   requestLoginOtp: async (email, password) => {
     const res = await apiInitiateLogin(email, password);
+    return res;
+  },
+
+  requestSignupOtp: async (name, email, password) => {
+    const res = await apiInitiateSignup(name, email, password);
     return res;
   },
 

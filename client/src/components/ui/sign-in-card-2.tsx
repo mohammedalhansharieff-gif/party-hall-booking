@@ -42,7 +42,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 export function Component() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup, requestLoginOtp, verifyLoginOtp, resendLoginOtp, token } = useAuthStore();
+  const { login, signup, requestLoginOtp, requestSignupOtp, verifyLoginOtp, resendLoginOtp, token } = useAuthStore();
   
   const [step, setStep] = useState<'form' | 'otp'>('form');
   const [isSignUp, setIsSignUp] = useState(location.pathname === '/signup');
@@ -147,11 +147,19 @@ export function Component() {
           return;
         }
 
-        await signup(name, email, password);
-        toast.success(`Account created! Welcome to GrandVenues, ${name}!`);
-        navigate(destination, { replace: true });
+        // Request 6-digit OTP verification code for new user signup
+        const res = await requestSignupOtp(name, email, password);
+        setStep('otp');
+        setCountdown(30);
+        setCanResend(false);
+        setOtp(['', '', '', '', '', '']);
+        toast.success(res.message || '6-digit verification code sent to your Gmail inbox! (Valid for 5 minutes)');
+
+        setTimeout(() => {
+          otpInputsRef.current[0]?.focus();
+        }, 300);
       } else {
-        // Request 6-digit OTP verification code
+        // Request 6-digit OTP verification code for existing user login
         const res = await requestLoginOtp(email, password);
         setStep('otp');
         setCountdown(30);
@@ -164,7 +172,7 @@ export function Component() {
         }, 300);
       }
     } catch (err: any) {
-      toast.error(err.message || (isSignUp ? 'Registration failed.' : 'Login failed. Please verify credentials.'));
+      toast.error(err.message || (isSignUp ? 'Registration failed. Please check details.' : 'Login failed. Please verify credentials.'));
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +238,7 @@ export function Component() {
     setIsLoading(true);
     try {
       await verifyLoginOtp(email, code);
-      toast.success('Verification successful! Welcome to GrandVenues.');
+      toast.success(isSignUp ? 'Account successfully verified and created! Welcome to GrandVenues.' : 'Verification successful! Welcome back.');
       navigate(destination, { replace: true });
     } catch (err: any) {
       toast.error(err.message || 'Invalid verification code. Please check your email.');
