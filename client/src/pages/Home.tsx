@@ -12,15 +12,7 @@ import {
   CheckCircle,
   ChevronDown,
   HelpCircle,
-  Phone,
-  Mail,
-  MapPin,
-  MessageCircle,
-  Send,
-  Building2,
-  Compass,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { getHalls } from '../api/halls.api';
 import { Hall } from '../types';
 import { HallCard } from '../components/halls/HallCard';
@@ -30,9 +22,6 @@ export const Home: React.FC = () => {
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
-  const [contactMessage, setContactMessage] = useState('');
 
   useEffect(() => {
     const fetchHalls = async () => {
@@ -47,18 +36,6 @@ export const Home: React.FC = () => {
     };
     fetchHalls();
   }, []);
-
-  const handleContactSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contactName || !contactEmail || !contactMessage) {
-      toast.error('Please fill in all inquiry fields');
-      return;
-    }
-    toast.success('Thank you! Our venue concierge will reach out to you within 2 hours.');
-    setContactName('');
-    setContactEmail('');
-    setContactMessage('');
-  };
 
   const faqs = [
     {
@@ -326,142 +303,6 @@ export const Home: React.FC = () => {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* Contact Information & Help Desk */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center space-x-2 bg-[#F9F0D3]/90 border border-[#E7CA70]/70 px-4 py-1.5 rounded-full text-[#835D12] text-xs font-semibold uppercase tracking-wider shadow-sm mb-3">
-            <Building2 className="w-3.5 h-3.5 text-[#A17619]" />
-            <span>We Are Here To Help</span>
-          </div>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
-            Contact Venue Concierge & Support
-          </h2>
-          <p className="text-slate-600 text-sm mt-3">
-            Schedule an in-person hall walkthrough, request custom decor pricing, or speak with our event coordinators.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Contact Details Cards */}
-          <div className="space-y-4 lg:col-span-1">
-            <div className="bg-white/85 backdrop-blur-md border border-amber-900/10 p-6 rounded-2xl shadow-sm space-y-2 hover:border-[#E7CA70]/60 transition-colors">
-              <div className="flex items-center space-x-3 text-[#835D12]">
-                <div className="w-10 h-10 rounded-xl bg-[#F9F0D3] flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-[#A17619]" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Direct Helpline</h4>
-                  <p className="text-xs text-slate-500">Toll-free / Central Desk</p>
-                </div>
-              </div>
-              <p className="text-slate-800 font-semibold text-base pt-2">
-                <a href="tel:+918004567890" className="hover:text-[#A17619] transition-colors">
-                  +91 (800) 456-7890
-                </a>
-              </p>
-              <p className="text-xs text-slate-500">Available Mon – Sun: 08:00 AM – 09:00 PM</p>
-            </div>
-
-            <div className="bg-white/85 backdrop-blur-md border border-amber-900/10 p-6 rounded-2xl shadow-sm space-y-2 hover:border-[#E7CA70]/60 transition-colors">
-              <div className="flex items-center space-x-3 text-[#835D12]">
-                <div className="w-10 h-10 rounded-xl bg-[#F9F0D3] flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-[#A17619]" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Email Inquiries</h4>
-                  <p className="text-xs text-slate-500">Reservations & Custom Quotes</p>
-                </div>
-              </div>
-              <p className="text-slate-800 font-semibold text-sm pt-2">
-                <a href="mailto:reservations@grandvenues.com" className="hover:text-[#A17619] transition-colors">
-                  reservations@grandvenues.com
-                </a>
-              </p>
-              <p className="text-xs text-slate-500">Typical response time: under 2 hours</p>
-            </div>
-
-            <div className="bg-white/85 backdrop-blur-md border border-amber-900/10 p-6 rounded-2xl shadow-sm space-y-2 hover:border-[#E7CA70]/60 transition-colors">
-              <div className="flex items-center space-x-3 text-[#835D12]">
-                <div className="w-10 h-10 rounded-xl bg-[#F9F0D3] flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-[#A17619]" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Central Venue Office</h4>
-                  <p className="text-xs text-slate-500">Walkthroughs & Physical Desk</p>
-                </div>
-              </div>
-              <p className="text-slate-700 text-xs leading-relaxed pt-2">
-                Premier Convention Center Road, Central City, 560001
-              </p>
-              <p className="text-xs text-slate-500">Walk-in tours daily: 09:00 AM – 08:00 PM</p>
-            </div>
-          </div>
-
-          {/* Direct Consultation Request Form */}
-          <div className="lg:col-span-2 bg-white/90 backdrop-blur-md border border-amber-900/10 p-8 sm:p-10 rounded-2xl shadow-sm">
-            <h3 className="font-serif text-2xl font-bold text-slate-900 mb-2">
-              Have A Custom Event In Mind?
-            </h3>
-            <p className="text-slate-600 text-sm mb-6">
-              Send us your requirements and our venue director will provide availability options and customized estimates.
-            </p>
-
-            <form onSubmit={handleContactSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Rahul Sharma"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#C39626] text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@example.com"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#C39626] text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Event Details or Questions
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Tell us about your event date, estimated guests, catering preferences, or questions..."
-                  value={contactMessage}
-                  onChange={(e) => setContactMessage(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#C39626] text-sm resize-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] hover:brightness-105 text-white font-semibold px-8 py-3.5 rounded-xl shadow-md shadow-amber-900/15 transition-all active:scale-95 text-sm"
-              >
-                <span>Send Inquiry to Venue Desk</span>
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
         </div>
       </section>
     </div>
