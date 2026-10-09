@@ -6,14 +6,31 @@ import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 export const handleInitiateLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    const { email: userEmail, name } = await adminService.validateCredentialsAndSendOtp(email, password);
+    const result = await adminService.validateCredentialsAndSendOtp(email, password);
+
+    // If Admin: Direct login with NO OTP!
+    if (!result.requiresOtp && result.token && result.admin) {
+      res.cookie('token', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
+
+      return res.json({
+        success: true,
+        requiresOtp: false,
+        message: `Welcome back, ${result.admin.name}!`,
+        data: { admin: result.admin, token: result.token },
+      });
+    }
 
     return res.json({
       success: true,
       requiresOtp: true,
-      message: `A 6-digit verification code has been sent to ${userEmail}`,
-      email: userEmail,
-      name,
+      message: `A 6-digit verification code has been sent to ${result.email}`,
+      email: result.email,
+      name: result.name,
     });
   } catch (error: any) {
     if (error.message === 'Invalid email or password') {

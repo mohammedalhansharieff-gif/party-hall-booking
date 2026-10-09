@@ -20,6 +20,39 @@ export const validateCredentialsAndSendOtp = async (email: string, password: str
     throw new Error('Invalid email or password');
   }
 
+  const isAdmin =
+    admin.role === 'SUPER_ADMIN' ||
+    admin.role === 'ADMIN' ||
+    admin.email.toLowerCase() === 'admin@hallbooking.com';
+
+  // For Admin users: NO OTP REQUIRED! Direct login!
+  if (isAdmin) {
+    const token = jwt.sign(
+      {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
+      ENV.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    return {
+      requiresOtp: false,
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
+      token,
+      email: admin.email,
+      name: admin.name,
+    };
+  }
+
+  // For regular users: require 6-digit Gmail OTP
   const user = {
     id: admin.id,
     email: admin.email,
@@ -30,6 +63,7 @@ export const validateCredentialsAndSendOtp = async (email: string, password: str
   const otp = await createAndSendOtp(admin.email, user, 'LOGIN');
 
   return {
+    requiresOtp: true,
     email: admin.email,
     name: admin.name,
     otp,

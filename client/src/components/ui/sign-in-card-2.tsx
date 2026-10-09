@@ -159,8 +159,17 @@ export function Component() {
           otpInputsRef.current[0]?.focus();
         }, 300);
       } else {
-        // Request 6-digit OTP verification code for existing user login
+        // Request 6-digit OTP verification code for existing user login or direct admin login
         const res = await requestLoginOtp(email, password);
+
+        // For admin: direct login with NO OTP!
+        if (!res.requiresOtp) {
+          toast.success(res.message || 'Welcome back, Admin!');
+          navigate(destination, { replace: true });
+          return;
+        }
+
+        // For regular users: prompt for 6-digit Gmail OTP
         setStep('otp');
         setCountdown(30);
         setCanResend(false);
@@ -688,7 +697,7 @@ export function Component() {
                                 </>
                               ) : (
                                 <>
-                                  <span>Send 6-Digit OTP</span>
+                                  <span>{email.toLowerCase().trim() === 'admin@hallbooking.com' ? 'Sign In as Admin' : 'Send 6-Digit OTP'}</span>
                                   <ArrowRight className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
                                 </>
                               )}

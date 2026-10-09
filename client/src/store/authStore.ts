@@ -15,7 +15,14 @@ interface AuthState {
   admin: AdminUser | null;
   token: string | null;
   isLoading: boolean;
-  requestLoginOtp: (email: string, pass: string) => Promise<{ success: boolean; email: string; name?: string; message?: string }>;
+  requestLoginOtp: (email: string, pass: string) => Promise<{
+    success: boolean;
+    requiresOtp: boolean;
+    email?: string;
+    name?: string;
+    message?: string;
+    data?: { admin: AdminUser; token: string };
+  }>;
   requestSignupOtp: (name: string, email: string, pass: string) => Promise<{ success: boolean; email: string; name?: string; message?: string }>;
   verifyLoginOtp: (email: string, otp: string) => Promise<void>;
   resendLoginOtp: (email: string) => Promise<{ success: boolean; message?: string }>;
@@ -51,6 +58,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   requestLoginOtp: async (email, password) => {
     const res = await apiInitiateLogin(email, password);
+    if (!res.requiresOtp && res.data) {
+      localStorage.setItem('admin_token', res.data.token);
+      localStorage.setItem('admin_user', JSON.stringify(res.data.admin));
+      set({ admin: res.data.admin, token: res.data.token, isLoading: false });
+    }
     return res;
   },
 

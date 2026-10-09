@@ -4,7 +4,14 @@ import { AdminUser, Booking, DashboardStats, Hall } from '../types';
 export const initiateLogin = async (
   email: string,
   password: string
-): Promise<{ success: boolean; requiresOtp: boolean; message: string; email: string; name?: string }> => {
+): Promise<{
+  success: boolean;
+  requiresOtp: boolean;
+  message: string;
+  email?: string;
+  name?: string;
+  data?: { admin: AdminUser; token: string };
+}> => {
   const res = await api.post('/auth/send-otp', { email, password });
   return res.data;
 };
