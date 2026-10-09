@@ -1,12 +1,18 @@
 import { create } from 'zustand';
 import { AdminUser } from '../types';
-import { adminLogin as apiLogin, adminLogout as apiLogout, getAdminProfile } from '../api/admin.api';
+import {
+  adminLogin as apiLogin,
+  userSignup as apiSignup,
+  adminLogout as apiLogout,
+  getAdminProfile,
+} from '../api/admin.api';
 
 interface AuthState {
   admin: AdminUser | null;
   token: string | null;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
+  signup: (name: string, email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -37,6 +43,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     const { admin, token } = await apiLogin(email, password);
+    localStorage.setItem('admin_token', token);
+    localStorage.setItem('admin_user', JSON.stringify(admin));
+    set({ admin, token, isLoading: false });
+  },
+
+  signup: async (name, email, password) => {
+    const { admin, token } = await apiSignup(name, email, password);
     localStorage.setItem('admin_token', token);
     localStorage.setItem('admin_user', JSON.stringify(admin));
     set({ admin, token, isLoading: false });

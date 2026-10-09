@@ -9,6 +9,15 @@ export const adminLogin = async (
   return res.data.data;
 };
 
+export const userSignup = async (
+  name: string,
+  email: string,
+  password: string
+): Promise<{ admin: AdminUser; token: string }> => {
+  const res = await api.post('/auth/register', { name, email, password });
+  return res.data.data;
+};
+
 export const adminLogout = async () => {
   await api.post('/admin/auth/logout');
 };

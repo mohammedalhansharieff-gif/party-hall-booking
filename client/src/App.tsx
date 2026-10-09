@@ -21,14 +21,17 @@ import { useAuthStore } from './store/authStore';
 export const App: React.FC = () => {
   const { token, checkAuth } = useAuthStore();
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login' || location.pathname === '/admin/login';
+  const isAuthPage =
+    location.pathname === '/login' ||
+    location.pathname === '/signup' ||
+    location.pathname === '/admin/login';
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Gatekeeper: If user is not logged in, redirect them immediately to the login page
-  if (!token && !isLoginPage) {
+  // Gatekeeper: If user is not logged in, redirect them immediately to login/signup
+  if (!token && !isAuthPage) {
     return (
       <>
         <Toaster
@@ -46,14 +49,15 @@ export const App: React.FC = () => {
         />
         <Routes>
           <Route path="/login" element={<SignInCard2 />} />
+          <Route path="/signup" element={<SignInCard2 />} />
           <Route path="*" element={<Navigate to="/login" state={{ from: location }} replace />} />
         </Routes>
       </>
     );
   }
 
-  // If visiting the login page standalone
-  if (isLoginPage) {
+  // If visiting the auth page standalone (login / signup)
+  if (isAuthPage) {
     return (
       <>
         <Toaster
@@ -71,6 +75,7 @@ export const App: React.FC = () => {
         />
         <Routes>
           <Route path="/login" element={<SignInCard2 />} />
+          <Route path="/signup" element={<SignInCard2 />} />
           <Route path="/admin/login" element={<SignInCard2 />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

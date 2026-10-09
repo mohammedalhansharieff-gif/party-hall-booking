@@ -17,10 +17,11 @@ import {
   handleUpdateHall,
   handleDeleteHall,
   handleUploadImage,
+  handleRegister,
 } from './admin.controller';
 import { authenticateAdmin } from '../../middleware/auth.middleware';
 import { validateRequest } from '../../middleware/validate.middleware';
-import { adminLoginSchema, updateBookingStatusSchema } from './admin.schema';
+import { adminLoginSchema, registerSchema, updateBookingStatusSchema } from './admin.schema';
 import { createHallSchema, updateHallSchema } from '../halls/hall.schema';
 
 const router = Router();
@@ -54,6 +55,7 @@ const upload = multer({
 
 // Public Auth routes
 router.post('/auth/login', validateRequest(adminLoginSchema), handleAdminLogin);
+router.post('/auth/register', validateRequest(registerSchema), handleRegister);
 router.post('/auth/logout', handleAdminLogout);
 
 // Protected routes

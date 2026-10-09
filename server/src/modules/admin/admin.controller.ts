@@ -29,6 +29,31 @@ export const handleAdminLogin = async (req: Request, res: Response, next: NextFu
   }
 };
 
+export const handleRegister = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, email, password } = req.body;
+    const { admin, token } = await adminService.registerUser(name, email, password);
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Account created successfully',
+      data: { admin, token },
+    });
+  } catch (error: any) {
+    if (error.message === 'An account with this email already exists') {
+      return res.status(409).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
 export const handleAdminLogout = async (req: Request, res: Response) => {
   res.clearCookie('token');
   return res.json({ success: true, message: 'Logged out successfully' });

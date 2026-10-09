@@ -41,6 +41,50 @@ export const adminLogin = async (email: string, password: string) => {
   };
 };
 
+export const registerUser = async (name: string, email: string, password: string) => {
+  const normalizedEmail = email.toLowerCase().trim();
+  const existingUser = await prisma.adminUser.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (existingUser) {
+    throw new Error('An account with this email already exists');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash(password, salt);
+
+  const user = await prisma.adminUser.create({
+    data: {
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      role: 'USER',
+    },
+  });
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    ENV.JWT_SECRET,
+    { expiresIn: '8h' }
+  );
+
+  return {
+    admin: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    token,
+  };
+};
+
 export const getAdminBookings = async (filters: {
   status?: string;
   hallId?: number;
