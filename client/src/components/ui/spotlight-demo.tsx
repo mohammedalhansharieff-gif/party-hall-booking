@@ -37,21 +37,20 @@ export function Default() {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-black flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden">
-      {/* Background subtle radial spotlight */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[90vw] h-[50vh] rounded-full bg-white/[0.03] blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[60vw] h-[30vh] rounded-full bg-amber-500/[0.04] blur-[120px] pointer-events-none" />
+    <div className="w-full min-h-screen bg-[#0D0B09] flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden">
+      {/* Background ambient radial aura */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[90vw] h-[50vh] rounded-full bg-amber-500/10 blur-[120px] pointer-events-none" />
 
       {/* Header Title */}
       <div className="relative z-10 text-center mb-10 space-y-3">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-amber-200 text-xs font-semibold tracking-wider uppercase backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-[#E7CA70]/30 text-amber-300 text-xs font-semibold tracking-wider uppercase">
           <Sparkles className="w-3.5 h-3.5 text-[#E7CA70]" />
           <span>Interactive Pointer Spotlight</span>
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold font-serif text-white tracking-tight">
           Featured Luxury Banquets
         </h2>
-        <p className="text-sm sm:text-base text-neutral-400 max-w-xl mx-auto">
+        <p className="text-sm sm:text-base text-amber-100/70 max-w-xl mx-auto">
           Hover across the cards to experience pointer-tracking radiant illumination
         </p>
       </div>
@@ -65,7 +64,7 @@ export function Default() {
               key={idx}
               glowColor={venue.glowColor}
               size="lg"
-              className="bg-black border-white/10 hover:border-[#E7CA70]/60 group text-white shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
+              className="bg-[#14100B]/90 border-[#E7CA70]/30 hover:border-[#E7CA70]/70 group text-white"
             >
               {/* Card Media Header */}
               <div className="relative w-full h-44 rounded-xl overflow-hidden mb-2">
@@ -74,16 +73,16 @@ export function Default() {
                   alt={venue.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#14100B] via-transparent to-black/30" />
                 
                 {/* Category Badge */}
-                <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-medium text-amber-200">
+                <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-[#E7CA70]/40 text-[11px] font-medium text-amber-200">
                   <Icon className="w-3 h-3 text-[#E7CA70]" />
                   <span>{venue.category}</span>
                 </div>
 
                 {/* Rating Badge */}
-                <div className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white">
+                <div className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-semibold text-white">
                   <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                   <span>{venue.rating}</span>
                 </div>
@@ -95,19 +94,19 @@ export function Default() {
                   {venue.title}
                 </h3>
 
-                <div className="flex items-center justify-between text-xs text-neutral-400 pt-1 border-t border-white/10">
+                <div className="flex items-center justify-between text-xs text-amber-100/70 pt-1 border-t border-white/5">
                   <span className="flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-[#E7CA70]" />
                     {venue.capacity}
                   </span>
                   <span className="font-semibold text-white text-sm">
-                    {venue.price} <span className="text-[10px] text-neutral-500 font-normal">/ slot</span>
+                    {venue.price} <span className="text-[10px] text-amber-200/60 font-normal">/ slot</span>
                   </span>
                 </div>
 
                 <button
                   type="button"
-                  className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#835D12] via-[#A17619] to-[#C39626] hover:brightness-110 text-white font-semibold text-xs tracking-wide flex items-center justify-center gap-1.5 shadow-md shadow-black/80 transition-all cursor-pointer"
+                  className="w-full mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#835D12] via-[#A17619] to-[#C39626] hover:brightness-110 text-white font-semibold text-xs tracking-wide flex items-center justify-center gap-1.5 shadow-md shadow-amber-950/40 transition-all cursor-pointer"
                 >
                   <span>Reserve Venue</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
