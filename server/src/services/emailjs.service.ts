@@ -1,4 +1,3 @@
-import emailjs from '@emailjs/nodejs';
 import { ENV } from '../config/env';
 
 export interface EmailJsResult {
@@ -63,28 +62,47 @@ export const sendEmailJsOtp = async (
       message: `Your GrandVenues 6-digit verification code is: ${otp}. This code is valid for 5 minutes.`,
     };
 
-    const response = await emailjs.send(
-      serviceId,
-      templateId,
-      templateParams,
-      {
-        publicKey,
-        privateKey: privateKey || undefined,
-      }
-    );
-
-    console.log(`[EmailJS] ✅ OTP email dispatched to ${toEmail} (status ${response.status})`);
-    return {
-      success: true,
-      status: response.status,
-      text: response.text,
+    const payload = {
+      user_id: publicKey,
+      accessToken: privateKey || undefined,
+      service_id: serviceId,
+      template_id: templateId,
+      template_params: templateParams,
     };
+
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': ENV.CLIENT_URL || 'http://localhost:5173',
+        'User-Agent': 'GrandVenues/1.0',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const responseText = await response.text();
+
+    if (response.status === 200) {
+      console.log(`[EmailJS] ✅ OTP email dispatched successfully to ${toEmail} (status 200)`);
+      return {
+        success: true,
+        status: 200,
+        text: responseText,
+      };
+    } else {
+      console.error(`[EmailJS Error] Failed sending OTP to ${toEmail} (status ${response.status}):`, responseText);
+      return {
+        success: false,
+        status: response.status,
+        error: `EmailJS error (${response.status}): ${responseText}`,
+      };
+    }
   } catch (error: any) {
-    const errorMsg = error?.text || error?.message || String(error);
-    console.error(`[EmailJS Error] Failed sending OTP to ${toEmail}:`, errorMsg);
+    const errorMsg = error?.message || String(error);
+    console.error(`[EmailJS Error] Network error sending OTP to ${toEmail}:`, errorMsg);
     return {
       success: false,
-      error: `EmailJS delivery error: ${errorMsg}`,
+      error: `EmailJS network error: ${errorMsg}`,
     };
   }
 };
