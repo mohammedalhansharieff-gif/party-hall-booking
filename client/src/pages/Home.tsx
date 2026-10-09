@@ -270,7 +270,7 @@ export const Home: React.FC = () => {
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
             Frequently Asked Questions
           </h2>
-          <p className="text-slate-600 text-sm mt-3">
+          <p className="text-black text-sm mt-3 font-medium">
             Everything you need to know about slot reservations, policies, and hall amenities.
           </p>
         </div>
