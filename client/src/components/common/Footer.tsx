@@ -5,25 +5,13 @@ import {
   Instagram,
   Facebook,
   Twitter,
-  MessageSquare,
   X,
-  Phone,
-  CalendarCheck,
-  Send,
   CheckCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'bot' | 'user'; text: string }>>([
-    {
-      sender: 'bot',
-      text: 'Hello! Welcome to GrandVenues Concierge. How can we help you plan your special celebration today?',
-    },
-  ]);
   const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
 
   const handleSubscribe = (e: React.FormEvent) => {
@@ -34,25 +22,6 @@ export const Footer: React.FC = () => {
     }
     toast.success('Thank you for subscribing! Exclusive venue offers are on their way.');
     setEmail('');
-  };
-
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatMessage.trim()) return;
-
-    const userText = chatMessage;
-    setChatHistory((prev) => [...prev, { sender: 'user', text: userText }]);
-    setChatMessage('');
-
-    setTimeout(() => {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: `Thank you for your message! Our reservations coordinator will reach back to you shortly. For immediate assistance, feel free to call our desk directly at +91 (800) 456-7890.`,
-        },
-      ]);
-    }, 700);
   };
 
   const policies: Record<string, { title: string; content: string }> = {
@@ -109,12 +78,12 @@ export const Footer: React.FC = () => {
                   </a>
                 </li>
                 <li>
-                  <button
-                    onClick={() => setChatOpen(true)}
-                    className="hover:text-[#C5A46D] transition-colors text-left"
+                  <a
+                    href="mailto:reservations@grandvenues.com"
+                    className="hover:text-[#C5A46D] transition-colors"
                   >
                     Contact Us
-                  </button>
+                  </a>
                 </li>
                 <li>
                   <Link to="/check-booking" className="hover:text-[#C5A46D] transition-colors">
@@ -243,95 +212,7 @@ export const Footer: React.FC = () => {
         </div>
       </footer>
 
-      {/* Floating Chat Pill Widget in bottom-right corner */}
-      <div className="fixed bottom-6 right-6 z-50">
-        {!chatOpen ? (
-          <button
-            onClick={() => setChatOpen(true)}
-            className="inline-flex items-center space-x-2 bg-black hover:bg-zinc-900 text-white px-5 py-3 rounded-full shadow-2xl border border-white/20 transition-all hover:scale-105 active:scale-95 text-sm font-semibold tracking-wide"
-          >
-            <MessageSquare className="w-4 h-4 text-[#C5A46D]" />
-            <span>Chat</span>
-          </button>
-        ) : (
-          <div className="bg-[#1A1D20] border border-white/15 rounded-2xl shadow-2xl w-80 sm:w-96 overflow-hidden flex flex-col h-[420px] animate-in fade-in slide-in-from-bottom-5 duration-200">
-            {/* Chat Header */}
-            <div className="bg-[#131518] px-4 py-3.5 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <div>
-                  <h4 className="text-white text-xs font-bold uppercase tracking-wider">
-                    Venue Concierge Desk
-                  </h4>
-                  <p className="text-[10px] text-slate-400">Live Assistance Available</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setChatOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="bg-[#17191C] px-3 py-2 border-b border-white/5 flex gap-2 overflow-x-auto text-[11px]">
-              <a
-                href="tel:+918004567890"
-                className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-slate-200 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors"
-              >
-                <Phone className="w-3 h-3 text-[#C5A46D]" />
-                <span>Call Desk</span>
-              </a>
-              <Link
-                to="/check-booking"
-                onClick={() => setChatOpen(false)}
-                className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-slate-200 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors"
-              >
-                <CalendarCheck className="w-3 h-3 text-[#C5A46D]" />
-                <span>Track Booking</span>
-              </Link>
-            </div>
-
-            {/* Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
-              {chatHistory.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl leading-relaxed ${
-                      msg.sender === 'user'
-                        ? 'bg-[#9E7D4F] text-white rounded-br-xs'
-                        : 'bg-white/10 text-slate-200 rounded-bl-xs'
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Input Bar */}
-            <form onSubmit={handleSendChat} className="p-3 bg-[#131518] border-t border-white/10 flex gap-2">
-              <input
-                type="text"
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                placeholder="Ask about dates, pricing, tours..."
-                className="flex-1 px-3 py-2 bg-white/10 rounded-xl text-white placeholder:text-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-[#C5A46D]"
-              />
-              <button
-                type="submit"
-                className="p-2 bg-[#9E7D4F] hover:bg-[#8C6E40] text-white rounded-xl transition-colors shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
 
       {/* Policy Modal */}
       {policyModal && (
