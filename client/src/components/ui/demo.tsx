@@ -160,3 +160,4 @@ export default function AnimatedGradientDemo() {
 }
 
 export { DemoOne } from './sign-in-demo';
+export { Default } from './spotlight-demo';
