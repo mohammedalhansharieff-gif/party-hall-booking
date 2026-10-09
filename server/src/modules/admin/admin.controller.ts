@@ -14,7 +14,6 @@ export const handleInitiateLogin = async (req: Request, res: Response, next: Nex
       message: `A 6-digit verification code has been sent to ${userEmail}`,
       email: userEmail,
       name,
-      previewOtp: otp,
     });
   } catch (error: any) {
     if (error.message === 'Invalid email or password') {
@@ -55,7 +54,6 @@ export const handleResendOtp = async (req: Request, res: Response, next: NextFun
       success: true,
       message: `A new 6-digit verification code has been sent to ${userEmail}`,
       email: userEmail,
-      previewOtp: otp,
     });
   } catch (error: any) {
     return res.status(400).json({ success: false, message: error.message });

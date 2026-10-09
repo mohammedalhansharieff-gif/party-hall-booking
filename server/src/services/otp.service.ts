@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { sendLoginOtpEmail } from './email.service';
+import { sendEmailJsOtp } from './emailjs.service';
 
 interface OtpEntry {
   otp: string;
@@ -36,7 +37,8 @@ export const createAndSendOtp = async (
   const otpNumber = crypto.randomInt(100000, 1000000);
   const otp = otpNumber.toString();
 
-  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+  // Exactly 5 minutes expiry
+  const expiresAt = Date.now() + 5 * 60 * 1000;
 
   otpCache.set(normalizedEmail, {
     otp,
@@ -48,11 +50,16 @@ export const createAndSendOtp = async (
   console.log(`\n================== [GRANDVENUES LOGIN OTP] ==================`);
   console.log(`User: ${user.name} (${normalizedEmail})`);
   console.log(`6-Digit Verification Code: ${otp}`);
-  console.log(`Expires in: 10 minutes`);
+  console.log(`Expires in: 5 minutes`);
   console.log(`============================================================\n`);
 
-  // Send real email via nodemailer
-  await sendLoginOtpEmail(normalizedEmail, otp, user.name);
+  // 1. Try sending via EmailJS
+  const emailJsSent = await sendEmailJsOtp(normalizedEmail, otp, user.name);
+
+  // 2. Also dispatch via nodemailer if EmailJS not configured or as fallback
+  if (!emailJsSent) {
+    await sendLoginOtpEmail(normalizedEmail, otp, user.name);
+  }
 
   return otp;
 };

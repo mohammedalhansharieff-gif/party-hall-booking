@@ -14,9 +14,9 @@ interface AuthState {
   admin: AdminUser | null;
   token: string | null;
   isLoading: boolean;
-  requestLoginOtp: (email: string, pass: string) => Promise<{ success: boolean; email: string; name?: string; message?: string; previewOtp?: string }>;
+  requestLoginOtp: (email: string, pass: string) => Promise<{ success: boolean; email: string; name?: string; message?: string }>;
   verifyLoginOtp: (email: string, otp: string) => Promise<void>;
-  resendLoginOtp: (email: string) => Promise<{ success: boolean; message?: string; previewOtp?: string }>;
+  resendLoginOtp: (email: string) => Promise<{ success: boolean; message?: string }>;
   login: (email: string, pass: string) => Promise<void>;
   signup: (name: string, email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;

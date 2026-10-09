@@ -12,7 +12,6 @@ import {
   Sparkles,
   User,
   UserPlus,
-  KeyRound,
   ShieldCheck,
   RotateCcw,
   CheckCircle2,
@@ -53,7 +52,6 @@ export function Component() {
   const [password, setPassword] = useState(isSignUp ? "" : "admin123");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [previewOtp, setPreviewOtp] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,12 +153,11 @@ export function Component() {
       } else {
         // Request 6-digit OTP verification code
         const res = await requestLoginOtp(email, password);
-        setPreviewOtp(res.previewOtp || null);
         setStep('otp');
         setCountdown(30);
         setCanResend(false);
         setOtp(['', '', '', '', '', '']);
-        toast.success(res.message || '6-digit verification code sent to your email!');
+        toast.success(res.message || '6-digit verification code sent to your Gmail inbox! (Valid for 5 minutes)');
 
         setTimeout(() => {
           otpInputsRef.current[0]?.focus();
@@ -246,12 +243,11 @@ export function Component() {
     if (!canResend || isLoading) return;
     setIsLoading(true);
     try {
-      const res = await resendLoginOtp(email);
-      setPreviewOtp(res.previewOtp || null);
+      await resendLoginOtp(email);
       setCountdown(30);
       setCanResend(false);
       setOtp(['', '', '', '', '', '']);
-      toast.success('A new 6-digit verification code has been dispatched.');
+      toast.success('A new 6-digit verification code has been sent to your Gmail.');
       otpInputsRef.current[0]?.focus();
     } catch (err: any) {
       toast.error(err.message || 'Failed to resend code.');
@@ -744,28 +740,11 @@ export function Component() {
                       Verification code sent to <br />
                       <span className="text-white font-semibold underline underline-offset-2">{email}</span>
                     </p>
-                  </div>
-
-                  {/* Dev / Quick Preview Helper */}
-                  {previewOtp && (
-                    <div className="bg-amber-950/50 border border-[#E7CA70]/30 rounded-xl p-2.5 flex items-center justify-between text-xs text-amber-200">
-                      <div className="flex items-center gap-1.5">
-                        <KeyRound className="w-3.5 h-3.5 text-[#E7CA70]" />
-                        <span>Code: <strong className="font-mono tracking-widest text-white text-sm">{previewOtp}</strong></span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const chars = previewOtp.split('');
-                          setOtp(chars);
-                          toast.success('Code filled');
-                        }}
-                        className="text-[11px] font-semibold text-[#E7CA70] hover:text-white underline cursor-pointer"
-                      >
-                        Auto-Fill
-                      </button>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-[#E7CA70]/30 text-[11px] font-medium text-amber-300 mt-1">
+                      <Sparkles className="w-3 h-3 text-[#E7CA70]" />
+                      <span>Code expires in 5 minutes • Check your Gmail</span>
                     </div>
-                  )}
+                  </div>
 
                   {/* 6-Digit OTP Form */}
                   <form onSubmit={handleVerifyOtpSubmit} className="space-y-4">
