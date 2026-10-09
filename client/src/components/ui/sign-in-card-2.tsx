@@ -1,8 +1,23 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Castle, Sparkles, User, UserPlus } from 'lucide-react';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Castle,
+  Sparkles,
+  User,
+  UserPlus,
+  KeyRound,
+  ShieldCheck,
+  RotateCcw,
+  CheckCircle2,
+  ArrowLeft,
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
@@ -28,21 +43,28 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 export function Component() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup, token } = useAuthStore();
+  const { login, signup, requestLoginOtp, verifyLoginOtp, resendLoginOtp, token } = useAuthStore();
   
+  const [step, setStep] = useState<'form' | 'otp'>('form');
   const [isSignUp, setIsSignUp] = useState(location.pathname === '/signup');
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState(isSignUp ? "" : "admin@hallbooking.com");
   const [password, setPassword] = useState(isSignUp ? "" : "admin123");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [previewOtp, setPreviewOtp] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(30);
+  const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
 
+  const otpInputsRef = useRef<Array<HTMLInputElement | null>>([]);
+
   const destination = (location.state as any)?.from?.pathname || '/';
 
-  // If user is already logged in, automatically proceed to website
+  // If user is already logged in, automatically proceed to website without showing verification again
   useEffect(() => {
     if (token) {
       navigate(destination, { replace: true });
@@ -53,10 +75,24 @@ export function Component() {
   useEffect(() => {
     if (location.pathname === '/signup') {
       setIsSignUp(true);
+      setStep('form');
     } else if (location.pathname === '/login') {
       setIsSignUp(false);
     }
   }, [location.pathname]);
+
+  // Countdown timer for OTP resend
+  useEffect(() => {
+    let timer: any;
+    if (step === 'otp' && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (step === 'otp' && countdown === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(timer);
+  }, [step, countdown]);
 
   // For 3D card effect - increased rotation range for more pronounced 3D effect
   const mouseX = useMotionValue(0);
@@ -77,6 +113,7 @@ export function Component() {
 
   const handleToggleMode = (signUpMode: boolean) => {
     setIsSignUp(signUpMode);
+    setStep('form');
     setShowPassword(false);
     if (signUpMode) {
       setName("");
@@ -89,7 +126,8 @@ export function Component() {
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  // Form submit: either signup or request 6-digit OTP
+  const handleSubmitForm = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
 
@@ -112,15 +150,111 @@ export function Component() {
         }
 
         await signup(name, email, password);
-        toast.success(`Welcome to GrandVenues, ${name}!`);
+        toast.success(`Account created! Welcome to GrandVenues, ${name}!`);
         navigate(destination, { replace: true });
       } else {
-        await login(email, password);
-        toast.success('Welcome back to GrandVenues!');
-        navigate(destination, { replace: true });
+        // Request 6-digit OTP verification code
+        const res = await requestLoginOtp(email, password);
+        setPreviewOtp(res.previewOtp || null);
+        setStep('otp');
+        setCountdown(30);
+        setCanResend(false);
+        setOtp(['', '', '', '', '', '']);
+        toast.success(res.message || '6-digit verification code sent to your email!');
+
+        setTimeout(() => {
+          otpInputsRef.current[0]?.focus();
+        }, 300);
       }
     } catch (err: any) {
       toast.error(err.message || (isSignUp ? 'Registration failed.' : 'Login failed. Please verify credentials.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // OTP inputs handling
+  const handleOtpChange = (index: number, val: string) => {
+    const cleaned = val.replace(/\D/g, '');
+    if (!cleaned && val !== '') return;
+
+    const newOtp = [...otp];
+
+    // Handle paste of multiple characters
+    if (cleaned.length > 1) {
+      const chars = cleaned.slice(0, 6).split('');
+      chars.forEach((char, i) => {
+        newOtp[i] = char;
+      });
+      setOtp(newOtp);
+      const nextIndex = Math.min(chars.length, 5);
+      otpInputsRef.current[nextIndex]?.focus();
+      return;
+    }
+
+    newOtp[index] = cleaned;
+    setOtp(newOtp);
+
+    // Auto focus next input
+    if (cleaned && index < 5) {
+      otpInputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpInputsRef.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted) {
+      const newOtp = ['', '', '', '', '', ''];
+      pasted.split('').forEach((ch, idx) => {
+        if (idx < 6) newOtp[idx] = ch;
+      });
+      setOtp(newOtp);
+      const targetIdx = Math.min(pasted.length - 1, 5);
+      otpInputsRef.current[targetIdx]?.focus();
+    }
+  };
+
+  // Submit OTP Verification
+  const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otp.join('');
+    if (code.length !== 6) {
+      toast.error('Please enter the complete 6-digit verification code.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await verifyLoginOtp(email, code);
+      toast.success('Verification successful! Welcome to GrandVenues.');
+      navigate(destination, { replace: true });
+    } catch (err: any) {
+      toast.error(err.message || 'Invalid verification code. Please check your email.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!canResend || isLoading) return;
+    setIsLoading(true);
+    try {
+      const res = await resendLoginOtp(email);
+      setPreviewOtp(res.previewOtp || null);
+      setCountdown(30);
+      setCanResend(false);
+      setOtp(['', '', '', '', '', '']);
+      toast.success('A new 6-digit verification code has been dispatched.');
+      otpInputsRef.current[0]?.focus();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend code.');
     } finally {
       setIsLoading(false);
     }
@@ -215,7 +349,6 @@ export function Component() {
 
             {/* Traveling light beam effect */}
             <div className="absolute -inset-[1px] rounded-2xl overflow-hidden pointer-events-none">
-              {/* Top light beam */}
               <motion.div 
                 className="absolute top-0 left-0 h-[2px] w-[50%] bg-gradient-to-r from-transparent via-[#E7CA70] to-transparent opacity-80"
                 animate={{ 
@@ -227,8 +360,6 @@ export function Component() {
                   opacity: { duration: 1.4, repeat: Infinity, repeatType: "mirror" },
                 }}
               />
-              
-              {/* Right light beam */}
               <motion.div 
                 className="absolute top-0 right-0 h-[50%] w-[2px] bg-gradient-to-b from-transparent via-[#C39626] to-transparent opacity-80"
                 animate={{ 
@@ -240,8 +371,6 @@ export function Component() {
                   opacity: { duration: 1.4, repeat: Infinity, repeatType: "mirror", delay: 0.7 },
                 }}
               />
-              
-              {/* Bottom light beam */}
               <motion.div 
                 className="absolute bottom-0 right-0 h-[2px] w-[50%] bg-gradient-to-r from-transparent via-[#E7CA70] to-transparent opacity-80"
                 animate={{ 
@@ -253,8 +382,6 @@ export function Component() {
                   opacity: { duration: 1.4, repeat: Infinity, repeatType: "mirror", delay: 1.4 },
                 }}
               />
-              
-              {/* Left light beam */}
               <motion.div 
                 className="absolute bottom-0 left-0 h-[50%] w-[2px] bg-gradient-to-b from-transparent via-[#C39626] to-transparent opacity-80"
                 animate={{ 
@@ -266,33 +393,8 @@ export function Component() {
                   opacity: { duration: 1.4, repeat: Infinity, repeatType: "mirror", delay: 2.1 },
                 }}
               />
-
-              {/* Corner accent sparkles */}
-              <motion.div 
-                className="absolute top-0 left-0 h-[6px] w-[6px] rounded-full bg-[#E7CA70]/60 blur-[1px]"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
-              />
-              <motion.div 
-                className="absolute top-0 right-0 h-[8px] w-[8px] rounded-full bg-[#E7CA70]/70 blur-[2px]"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 2.4, repeat: Infinity, repeatType: "mirror", delay: 0.5 }}
-              />
-              <motion.div 
-                className="absolute bottom-0 right-0 h-[8px] w-[8px] rounded-full bg-[#E7CA70]/70 blur-[2px]"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 2.2, repeat: Infinity, repeatType: "mirror", delay: 1 }}
-              />
-              <motion.div 
-                className="absolute bottom-0 left-0 h-[6px] w-[6px] rounded-full bg-[#E7CA70]/60 blur-[1px]"
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{ duration: 2.3, repeat: Infinity, repeatType: "mirror", delay: 1.5 }}
-              />
             </div>
 
-            {/* Card border glow */}
-            <div className="absolute -inset-[0.5px] rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-200/20 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            
             {/* Glass card background */}
             <div className="relative bg-[#16120D]/90 backdrop-blur-2xl rounded-2xl p-6 border border-[#E7CA70]/20 shadow-2xl overflow-hidden">
               {/* Subtle card inner grid */}
@@ -303,356 +405,471 @@ export function Component() {
                 }}
               />
 
-              {/* Mode Switch Tabs */}
-              <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 mb-4">
-                <button
-                  type="button"
-                  onClick={() => handleToggleMode(false)}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    !isSignUp
-                      ? 'bg-gradient-to-r from-[#A17619] to-[#C39626] text-white shadow-sm'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleToggleMode(true)}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                    isSignUp
-                      ? 'bg-gradient-to-r from-[#A17619] to-[#C39626] text-white shadow-sm'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Sign Up
-                </button>
-              </div>
-
-              {/* Logo and header */}
-              <div className="text-center space-y-1 mb-5">
-                <motion.div
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", duration: 0.8 }}
-                  className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#835D12] via-[#A17619] to-[#C39626] border border-[#E7CA70]/40 flex items-center justify-center relative overflow-hidden shadow-lg shadow-amber-950/40"
-                >
-                  <Castle className="w-6 h-6 text-white drop-shadow" />
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-60 pointer-events-none" />
-                </motion.div>
-
-                <motion.h1
-                  key={isSignUp ? 'signup-title' : 'login-title'}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-2xl font-serif font-bold text-white tracking-tight"
-                >
-                  {isSignUp ? 'Create Guest Account' : 'GrandVenues Login'}
-                </motion.h1>
-                
-                <motion.p
-                  key={isSignUp ? 'signup-subtitle' : 'login-subtitle'}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-[#E7CA70]/70 text-xs font-medium"
-                >
-                  {isSignUp
-                    ? 'Register to book luxury banquet halls with instant confirmation'
-                    : 'Sign in to access your booking dashboard & reserve venues'}
-                </motion.p>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-3.5">
-                <motion.div className="space-y-2.5">
-                  {/* Full Name input (Only for Sign Up) */}
-                  {isSignUp && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className={`relative ${focusedInput === "name" ? 'z-10' : ''}`}
+              {step === 'form' ? (
+                <>
+                  {/* Mode Switch Tabs */}
+                  <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleMode(false)}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                        !isSignUp
+                          ? 'bg-gradient-to-r from-[#A17619] to-[#C39626] text-white shadow-sm'
+                          : 'text-white/60 hover:text-white'
+                      }`}
                     >
-                      <div className="relative flex items-center overflow-hidden rounded-lg">
-                        <User className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                          focusedInput === "name" ? 'text-[#E7CA70]' : 'text-white/40'
-                        }`} />
-                        
-                        <Input
-                          type="text"
-                          placeholder="Full Name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          onFocus={() => setFocusedInput("name")}
-                          onBlur={() => setFocusedInput(null)}
-                          required={isSignUp}
-                          className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
-                        />
-                      </div>
+                      Sign In
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleMode(true)}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                        isSignUp
+                          ? 'bg-gradient-to-r from-[#A17619] to-[#C39626] text-white shadow-sm'
+                          : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+
+                  {/* Logo and header */}
+                  <div className="text-center space-y-1 mb-5">
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", duration: 0.8 }}
+                      className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#835D12] via-[#A17619] to-[#C39626] border border-[#E7CA70]/40 flex items-center justify-center relative overflow-hidden shadow-lg shadow-amber-950/40"
+                    >
+                      <Castle className="w-6 h-6 text-white drop-shadow" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-60 pointer-events-none" />
                     </motion.div>
-                  )}
 
-                  {/* Email input */}
-                  <motion.div 
-                    className={`relative ${focusedInput === "email" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <Mail className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "email" ? 'text-[#E7CA70]' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type="email"
-                        placeholder="Email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onFocus={() => setFocusedInput("email")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
-                      />
-                    </div>
-                  </motion.div>
+                    <motion.h1
+                      key={isSignUp ? 'signup-title' : 'login-title'}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="text-2xl font-serif font-bold text-white tracking-tight"
+                    >
+                      {isSignUp ? 'Create Guest Account' : 'GrandVenues Login'}
+                    </motion.h1>
+                    
+                    <motion.p
+                      key={isSignUp ? 'signup-subtitle' : 'login-subtitle'}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="text-[#E7CA70]/70 text-xs font-medium"
+                    >
+                      {isSignUp
+                        ? 'Register to book luxury banquet halls with instant confirmation'
+                        : 'Enter credentials to receive your 6-digit verification code'}
+                    </motion.p>
+                  </div>
 
-                  {/* Password input */}
-                  <motion.div 
-                    className={`relative ${focusedInput === "password" ? 'z-10' : ''}`}
-                    whileFocus={{ scale: 1.01 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  >
-                    <div className="relative flex items-center overflow-hidden rounded-lg">
-                      <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                        focusedInput === "password" ? 'text-[#E7CA70]' : 'text-white/40'
-                      }`} />
-                      
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder={isSignUp ? "Password (min 6 characters)" : "Password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setFocusedInput("password")}
-                        onBlur={() => setFocusedInput(null)}
-                        required
-                        className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
-                      />
-                      
-                      {/* Toggle password visibility */}
-                      <button 
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)} 
-                        className="absolute right-3 cursor-pointer text-white/40 hover:text-white transition-colors duration-300 focus:outline-none"
+                  {/* Form */}
+                  <form onSubmit={handleSubmitForm} className="space-y-3.5">
+                    <motion.div className="space-y-2.5">
+                      {/* Full Name input (Only for Sign Up) */}
+                      {isSignUp && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className={`relative ${focusedInput === "name" ? 'z-10' : ''}`}
+                        >
+                          <div className="relative flex items-center overflow-hidden rounded-lg">
+                            <User className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                              focusedInput === "name" ? 'text-[#E7CA70]' : 'text-white/40'
+                            }`} />
+                            
+                            <Input
+                              type="text"
+                              placeholder="Full Name"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              onFocus={() => setFocusedInput("name")}
+                              onBlur={() => setFocusedInput(null)}
+                              required={isSignUp}
+                              className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Email input */}
+                      <motion.div 
+                        className={`relative ${focusedInput === "email" ? 'z-10' : ''}`}
+                        whileFocus={{ scale: 1.01 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                       >
-                        {showPassword ? (
-                          <Eye className="w-4 h-4" />
-                        ) : (
-                          <EyeOff className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
+                        <div className="relative flex items-center overflow-hidden rounded-lg">
+                          <Mail className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                            focusedInput === "email" ? 'text-[#E7CA70]' : 'text-white/40'
+                          }`} />
+                          
+                          <Input
+                            type="email"
+                            placeholder="Email address (e.g. name@gmail.com)"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onFocus={() => setFocusedInput("email")}
+                            onBlur={() => setFocusedInput(null)}
+                            required
+                            className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                          />
+                        </div>
+                      </motion.div>
 
-                  {/* Confirm Password input (Only for Sign Up) */}
-                  {isSignUp && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className={`relative ${focusedInput === "confirmPassword" ? 'z-10' : ''}`}
-                    >
-                      <div className="relative flex items-center overflow-hidden rounded-lg">
-                        <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                          focusedInput === "confirmPassword" ? 'text-[#E7CA70]' : 'text-white/40'
-                        }`} />
-                        
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Confirm Password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          onFocus={() => setFocusedInput("confirmPassword")}
-                          onBlur={() => setFocusedInput(null)}
-                          required={isSignUp}
-                          className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
-                        />
-                      </div>
+                      {/* Password input */}
+                      <motion.div 
+                        className={`relative ${focusedInput === "password" ? 'z-10' : ''}`}
+                        whileFocus={{ scale: 1.01 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      >
+                        <div className="relative flex items-center overflow-hidden rounded-lg">
+                          <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                            focusedInput === "password" ? 'text-[#E7CA70]' : 'text-white/40'
+                          }`} />
+                          
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder={isSignUp ? "Password (min 6 characters)" : "Password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onFocus={() => setFocusedInput("password")}
+                            onBlur={() => setFocusedInput(null)}
+                            required
+                            className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10"
+                          />
+                          
+                          {/* Toggle password visibility */}
+                          <button 
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)} 
+                            className="absolute right-3 cursor-pointer text-white/40 hover:text-white transition-colors duration-300 focus:outline-none"
+                          >
+                            {showPassword ? (
+                              <Eye className="w-4 h-4" />
+                            ) : (
+                              <EyeOff className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </motion.div>
+
+                      {/* Confirm Password input (Only for Sign Up) */}
+                      {isSignUp && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className={`relative ${focusedInput === "confirmPassword" ? 'z-10' : ''}`}
+                        >
+                          <div className="relative flex items-center overflow-hidden rounded-lg">
+                            <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
+                              focusedInput === "confirmPassword" ? 'text-[#E7CA70]' : 'text-white/40'
+                            }`} />
+                            
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Confirm Password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              onFocus={() => setFocusedInput("confirmPassword")}
+                              onBlur={() => setFocusedInput(null)}
+                              required={isSignUp}
+                              className="w-full bg-white/5 border-white/10 focus:border-[#E7CA70]/60 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-3 focus:bg-white/10"
+                            />
+                          </div>
+                        </motion.div>
+                      )}
                     </motion.div>
-                  )}
-                </motion.div>
 
-                {/* Default Credentials Quick Fill Hint (Only in Sign In mode) */}
-                {!isSignUp && (
-                  <div className="bg-amber-950/40 border border-[#E7CA70]/20 rounded-xl p-2.5 text-[11px] text-[#E7CA70]/90 space-y-0.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">Default Admin:</span>
+                    {/* Default Admin Fill (Only in Sign In mode) */}
+                    {!isSignUp && (
+                      <div className="bg-amber-950/40 border border-[#E7CA70]/20 rounded-xl p-2.5 text-[11px] text-[#E7CA70]/90 space-y-0.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-white">Default Admin:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEmail('admin@hallbooking.com');
+                              setPassword('admin123');
+                              toast.success('Default credentials filled');
+                            }}
+                            className="text-[10px] text-amber-300 hover:text-white underline cursor-pointer"
+                          >
+                            Fill Admin
+                          </button>
+                        </div>
+                        <p className="text-white/70">admin@hallbooking.com • admin123</p>
+                      </div>
+                    )}
+
+                    {/* Remember me & Forgot password */}
+                    {!isSignUp && (
+                      <div className="flex items-center justify-between pt-0.5">
+                        <div className="flex items-center space-x-2">
+                          <div className="relative flex items-center">
+                            <input
+                              id="remember-me"
+                              name="remember-me"
+                              type="checkbox"
+                              checked={rememberMe}
+                              onChange={() => setRememberMe(!rememberMe)}
+                              className="appearance-none h-4 w-4 rounded border border-white/20 bg-white/5 checked:bg-[#C39626] checked:border-[#C39626] focus:outline-none focus:ring-1 focus:ring-[#E7CA70]/40 transition-all duration-200 cursor-pointer"
+                            />
+                            {rememberMe && (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.5 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute inset-0 flex items-center justify-center text-white pointer-events-none"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </motion.div>
+                            )}
+                          </div>
+                          <label htmlFor="remember-me" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200 cursor-pointer">
+                            Remember session
+                          </label>
+                        </div>
+                        
+                        <div className="text-xs relative group/link">
+                          <Link href="/check-booking" className="text-[#E7CA70]/80 hover:text-white transition-colors duration-200">
+                            Track Booking?
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Submit button */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full relative group/button mt-2 cursor-pointer"
+                    >
+                      <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur-lg opacity-0 group-hover/button:opacity-80 transition-opacity duration-300" />
+                      
+                      <div className="relative overflow-hidden bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] text-white font-bold h-11 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg shadow-amber-950/40">
+                        <AnimatePresence mode="wait">
+                          {isLoading ? (
+                            <motion.div
+                              key="loading"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="flex items-center justify-center gap-2 text-xs"
+                            >
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>{isSignUp ? 'Creating account...' : 'Sending 6-digit OTP...'}</span>
+                            </motion.div>
+                          ) : (
+                            <motion.span
+                              key={isSignUp ? 'signup-btn' : 'signin-btn'}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="flex items-center justify-center gap-1.5 text-sm font-semibold tracking-wide"
+                            >
+                              {isSignUp ? (
+                                <>
+                                  <span>Create Account & Enter</span>
+                                  <UserPlus className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
+                                </>
+                              ) : (
+                                <>
+                                  <span>Send 6-Digit OTP</span>
+                                  <ArrowRight className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
+                                </>
+                              )}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.button>
+
+                    {/* Mode toggle message */}
+                    <div className="text-center pt-2">
+                      {isSignUp ? (
+                        <p className="text-xs text-white/60">
+                          Already have an account?{' '}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMode(false)}
+                            className="text-[#E7CA70] hover:text-white font-semibold underline cursor-pointer transition-colors"
+                          >
+                            Sign in here
+                          </button>
+                        </p>
+                      ) : (
+                        <p className="text-xs text-white/60">
+                          New to GrandVenues?{' '}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleMode(true)}
+                            className="text-[#E7CA70] hover:text-white font-semibold underline cursor-pointer transition-colors"
+                          >
+                            Create an account
+                          </button>
+                        </p>
+                      )}
+                    </div>
+                  </form>
+                </>
+              ) : (
+                /* Step 2: 6-Digit OTP Verification View */
+                <div className="space-y-4">
+                  {/* OTP Header */}
+                  <div className="text-center space-y-1 mb-4">
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", duration: 0.8 }}
+                      className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#835D12] via-[#A17619] to-[#C39626] border border-[#E7CA70]/40 flex items-center justify-center relative overflow-hidden shadow-lg shadow-amber-950/40"
+                    >
+                      <ShieldCheck className="w-6 h-6 text-white drop-shadow" />
+                    </motion.div>
+
+                    <h2 className="text-2xl font-serif font-bold text-white tracking-tight">
+                      Verify 6-Digit OTP
+                    </h2>
+                    
+                    <p className="text-[#E7CA70]/80 text-xs font-medium leading-relaxed">
+                      Verification code sent to <br />
+                      <span className="text-white font-semibold underline underline-offset-2">{email}</span>
+                    </p>
+                  </div>
+
+                  {/* Dev / Quick Preview Helper */}
+                  {previewOtp && (
+                    <div className="bg-amber-950/50 border border-[#E7CA70]/30 rounded-xl p-2.5 flex items-center justify-between text-xs text-amber-200">
+                      <div className="flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-[#E7CA70]" />
+                        <span>Code: <strong className="font-mono tracking-widest text-white text-sm">{previewOtp}</strong></span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
-                          setEmail('admin@hallbooking.com');
-                          setPassword('admin123');
-                          toast.success('Default credentials filled');
+                          const chars = previewOtp.split('');
+                          setOtp(chars);
+                          toast.success('Code filled');
                         }}
-                        className="text-[10px] text-amber-300 hover:text-white underline cursor-pointer"
+                        className="text-[11px] font-semibold text-[#E7CA70] hover:text-white underline cursor-pointer"
                       >
-                        Fill Admin
+                        Auto-Fill
                       </button>
                     </div>
-                    <p className="text-white/70">admin@hallbooking.com • admin123</p>
-                  </div>
-                )}
+                  )}
 
-                {/* Remember me & Forgot password (Only in Sign In mode) */}
-                {!isSignUp && (
-                  <div className="flex items-center justify-between pt-0.5">
-                    <div className="flex items-center space-x-2">
-                      <div className="relative flex items-center">
-                        <input
-                          id="remember-me"
-                          name="remember-me"
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={() => setRememberMe(!rememberMe)}
-                          className="appearance-none h-4 w-4 rounded border border-white/20 bg-white/5 checked:bg-[#C39626] checked:border-[#C39626] focus:outline-none focus:ring-1 focus:ring-[#E7CA70]/40 transition-all duration-200 cursor-pointer"
-                        />
-                        {rememberMe && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="absolute inset-0 flex items-center justify-center text-white pointer-events-none"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          </motion.div>
+                  {/* 6-Digit OTP Form */}
+                  <form onSubmit={handleVerifyOtpSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/50 text-center mb-2">
+                        Enter 6-Digit Verification Code
+                      </label>
+                      <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handleOtpPaste}>
+                        {otp.map((digit, idx) => (
+                          <input
+                            key={idx}
+                            ref={(el) => {
+                              otpInputsRef.current[idx] = el;
+                            }}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(idx, e.target.value)}
+                            onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                            className="w-10 sm:w-12 h-12 sm:h-13 text-center text-lg sm:text-xl font-bold font-mono text-white bg-white/5 border border-white/15 rounded-xl focus:border-[#E7CA70] focus:bg-white/10 focus:ring-2 focus:ring-[#E7CA70]/30 outline-none transition-all shadow-inner"
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Verify button */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={isLoading || otp.join('').length !== 6}
+                      className="w-full relative group/button cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur-lg opacity-0 group-hover/button:opacity-80 transition-opacity duration-300" />
+                      
+                      <div className="relative overflow-hidden bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] text-white font-bold h-11 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg shadow-amber-950/40">
+                        {isLoading ? (
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Verifying OTP...</span>
+                          </div>
+                        ) : (
+                          <span className="flex items-center justify-center gap-1.5 text-sm font-semibold tracking-wide">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Verify Code & Enter</span>
+                          </span>
                         )}
                       </div>
-                      <label htmlFor="remember-me" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200 cursor-pointer">
-                        Remember me
-                      </label>
-                    </div>
-                    
-                    <div className="text-xs relative group/link">
-                      <Link href="/check-booking" className="text-[#E7CA70]/80 hover:text-white transition-colors duration-200">
-                        Track Booking?
-                      </Link>
-                    </div>
-                  </div>
-                )}
+                    </motion.button>
 
-                {/* Submit button */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full relative group/button mt-2 cursor-pointer"
+                    {/* Resend & Back Row */}
+                    <div className="flex items-center justify-between text-xs text-white/60 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStep('form');
+                          setOtp(['', '', '', '', '', '']);
+                        }}
+                        className="inline-flex items-center gap-1 text-white/60 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Change Email</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={!canResend || isLoading}
+                        className={`inline-flex items-center gap-1 font-semibold transition-colors cursor-pointer ${
+                          canResend
+                            ? 'text-[#E7CA70] hover:text-white underline'
+                            : 'text-white/40 cursor-not-allowed'
+                        }`}
+                      >
+                        <RotateCcw className={`w-3 h-3 ${!canResend ? 'opacity-40' : ''}`} />
+                        <span>
+                          {canResend ? 'Resend Code' : `Resend in ${countdown}s`}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Minimal Divider */}
+              <div className="relative mt-3 mb-2 flex items-center">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="mx-3 text-[10px] uppercase tracking-wider text-white/40">
+                  GrandVenues Concierge
+                </span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div>
+
+              {/* FAQs link */}
+              <p className="text-center text-xs text-white/50">
+                Questions regarding reservations?{' '}
+                <Link 
+                  href="/#faq" 
+                  className="relative inline-block text-[#E7CA70] hover:text-white transition-colors duration-300 font-semibold"
                 >
-                  <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur-lg opacity-0 group-hover/button:opacity-80 transition-opacity duration-300" />
-                  
-                  <div className="relative overflow-hidden bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] text-white font-bold h-11 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg shadow-amber-950/40">
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 -z-10"
-                      animate={{ 
-                        x: ['-100%', '100%'],
-                      }}
-                      transition={{ 
-                        duration: 1.5, 
-                        ease: "easeInOut", 
-                        repeat: Infinity, 
-                        repeatDelay: 1 
-                      }}
-                      style={{ 
-                        opacity: isLoading ? 1 : 0,
-                        transition: 'opacity 0.3s ease'
-                      }}
-                    />
-                    
-                    <AnimatePresence mode="wait">
-                      {isLoading ? (
-                        <motion.div
-                          key="loading"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="flex items-center justify-center"
-                        >
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        </motion.div>
-                      ) : (
-                        <motion.span
-                          key={isSignUp ? 'signup-btn' : 'signin-btn'}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="flex items-center justify-center gap-1.5 text-sm font-semibold tracking-wide"
-                        >
-                          {isSignUp ? (
-                            <>
-                              <span>Create Account & Enter</span>
-                              <UserPlus className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
-                            </>
-                          ) : (
-                            <>
-                              <span>Sign In to GrandVenues</span>
-                              <ArrowRight className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
-                            </>
-                          )}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.button>
-
-                {/* Mode toggle message */}
-                <div className="text-center pt-2">
-                  {isSignUp ? (
-                    <p className="text-xs text-white/60">
-                      Already have an account?{' '}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleMode(false)}
-                        className="text-[#E7CA70] hover:text-white font-semibold underline cursor-pointer transition-colors"
-                      >
-                        Sign in here
-                      </button>
-                    </p>
-                  ) : (
-                    <p className="text-xs text-white/60">
-                      New to GrandVenues?{' '}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleMode(true)}
-                        className="text-[#E7CA70] hover:text-white font-semibold underline cursor-pointer transition-colors"
-                      >
-                        Create an account
-                      </button>
-                    </p>
-                  )}
-                </div>
-
-                {/* Minimal Divider */}
-                <div className="relative mt-2 mb-2 flex items-center">
-                  <div className="flex-grow border-t border-white/10"></div>
-                  <span className="mx-3 text-[11px] uppercase tracking-wider text-white/40">
-                    GrandVenues Experience
-                  </span>
-                  <div className="flex-grow border-t border-white/10"></div>
-                </div>
-
-                {/* FAQs link */}
-                <p className="text-center text-xs text-white/50">
-                  Questions regarding slot bookings?{' '}
-                  <Link 
-                    href="/#faq" 
-                    className="relative inline-block text-[#E7CA70] hover:text-white transition-colors duration-300 font-semibold"
-                  >
-                    View FAQs
-                  </Link>
-                </p>
-              </form>
+                  View FAQs
+                </Link>
+              </p>
             </div>
           </div>
         </motion.div>

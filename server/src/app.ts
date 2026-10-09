@@ -12,9 +12,21 @@ import hallRouter from './modules/halls/hall.router';
 import availabilityRouter from './modules/availability/availability.router';
 import bookingRouter from './modules/bookings/booking.router';
 import adminRouter from './modules/admin/admin.router';
-import { handleAdminLogin, handleAdminLogout, handleRegister } from './modules/admin/admin.controller';
+import {
+  handleAdminLogin,
+  handleAdminLogout,
+  handleRegister,
+  handleInitiateLogin,
+  handleVerifyOtp,
+  handleResendOtp,
+} from './modules/admin/admin.controller';
 import { validateRequest } from './middleware/validate.middleware';
-import { adminLoginSchema, registerSchema } from './modules/admin/admin.schema';
+import {
+  adminLoginSchema,
+  registerSchema,
+  verifyOtpSchema,
+  resendOtpSchema,
+} from './modules/admin/admin.schema';
 
 const app = express();
 
@@ -69,6 +81,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Auth aliases according to plan specification (/api/auth/login)
+app.post('/api/auth/send-otp', validateRequest(adminLoginSchema), handleInitiateLogin);
+app.post('/api/auth/verify-otp', validateRequest(verifyOtpSchema), handleVerifyOtp);
+app.post('/api/auth/resend-otp', validateRequest(resendOtpSchema), handleResendOtp);
 app.post('/api/auth/login', validateRequest(adminLoginSchema), handleAdminLogin);
 app.post('/api/auth/register', validateRequest(registerSchema), handleRegister);
 app.post('/api/auth/logout', handleAdminLogout);

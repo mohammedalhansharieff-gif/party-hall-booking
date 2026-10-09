@@ -3,6 +3,65 @@ import * as adminService from './admin.service';
 import * as hallService from '../halls/hall.service';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
+export const handleInitiateLogin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password } = req.body;
+    const { email: userEmail, name, otp } = await adminService.validateCredentialsAndSendOtp(email, password);
+
+    return res.json({
+      success: true,
+      requiresOtp: true,
+      message: `A 6-digit verification code has been sent to ${userEmail}`,
+      email: userEmail,
+      name,
+      previewOtp: otp,
+    });
+  } catch (error: any) {
+    if (error.message === 'Invalid email or password') {
+      return res.status(401).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+export const handleVerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, otp } = req.body;
+    const { admin, token } = await adminService.verifyOtpAndGenerateToken(email, otp);
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    return res.json({
+      success: true,
+      message: 'Verification successful',
+      data: { admin, token },
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const handleResendOtp = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    const { email: userEmail, otp } = await adminService.resendOtpForUser(email);
+
+    return res.json({
+      success: true,
+      message: `A new 6-digit verification code has been sent to ${userEmail}`,
+      email: userEmail,
+      previewOtp: otp,
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 export const handleAdminLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
@@ -13,7 +72,7 @@ export const handleAdminLogin = async (req: Request, res: Response, next: NextFu
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 8 * 60 * 60 * 1000, // 8 hours
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({

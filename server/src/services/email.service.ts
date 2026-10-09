@@ -118,24 +118,56 @@ export const sendBookingCancelledEmail = async (data: BookingEmailData & { reaso
   await sendMail(data.customerEmail, subject, html);
 };
 
+export const sendLoginOtpEmail = async (to: string, otp: string, name?: string) => {
+  const subject = `🔐 Your GrandVenues Login Verification Code: ${otp}`;
+  const html = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #16120D; color: #FAF7F2; padding: 32px; border-radius: 16px; border: 1px solid rgba(231, 202, 112, 0.3);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="color: #E7CA70; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">GrandVenues</h1>
+        <p style="color: #A17619; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px;">Luxury Banquet Halls & Reservations</p>
+      </div>
+      <p style="font-size: 15px; color: #EFE8DC;">Hello ${name ? `<strong>${name}</strong>` : 'there'},</p>
+      <p style="font-size: 14px; color: #D5C8B4; line-height: 1.6;">
+        You recently initiated a login to your GrandVenues account. Please use the 6-digit verification code below to complete your sign-in:
+      </p>
+      <div style="background: rgba(195, 150, 38, 0.12); border: 2px dashed #E7CA70; border-radius: 12px; padding: 20px; text-align: center; margin: 28px 0;">
+        <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #FAF7F2; display: inline-block;">
+          ${otp}
+        </span>
+        <p style="font-size: 11px; color: #E7CA70; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 8px; margin-bottom: 0;">
+          Expires in 10 minutes
+        </p>
+      </div>
+      <p style="font-size: 12px; color: #A69B88; line-height: 1.5;">
+        Once verified, you will stay securely logged in on this browser without needing to enter the code again. If you did not request this login, please ignore this email.
+      </p>
+      <hr style="border: 0; border-top: 1px solid rgba(231, 202, 112, 0.2); margin: 24px 0;" />
+      <p style="font-size: 11px; color: #7A6F5D; text-align: center; margin: 0;">
+        © ${new Date().getFullYear()} GrandVenues. All rights reserved.
+      </p>
+    </div>
+  `;
+
+  await sendMail(to, subject, html);
+};
+
 const sendMail = async (to: string, subject: string, html: string) => {
   if (transporter) {
     try {
       await transporter.sendMail({
-        from: `"Hall Booking System" <${ENV.EMAIL_USER}>`,
+        from: `"GrandVenues Concierge" <${ENV.EMAIL_USER}>`,
         to,
         subject,
         html,
       });
-      console.log(`[Email Sent] To: ${to} | Subject: ${subject}`);
+      console.log(`[Email Sent via SMTP] To: ${to} | Subject: ${subject}`);
     } catch (err) {
-      console.error('[Email Error]', err);
+      console.error('[Email Error - Falling back to console simulation]', err);
     }
   } else {
-    console.log(`\n================== [MOCK EMAIL SIMULATOR] ==================`);
+    console.log(`\n================== [EMAIL SIMULATOR] ==================`);
     console.log(`To: ${to}`);
     console.log(`Subject: ${subject}`);
-    console.log(`Content: (HTML formatted notification simulated successfully)`);
-    console.log(`===========================================================\n`);
+    console.log(`=======================================================\n`);
   }
 };

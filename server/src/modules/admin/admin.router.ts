@@ -18,10 +18,19 @@ import {
   handleDeleteHall,
   handleUploadImage,
   handleRegister,
+  handleInitiateLogin,
+  handleVerifyOtp,
+  handleResendOtp,
 } from './admin.controller';
 import { authenticateAdmin } from '../../middleware/auth.middleware';
 import { validateRequest } from '../../middleware/validate.middleware';
-import { adminLoginSchema, registerSchema, updateBookingStatusSchema } from './admin.schema';
+import {
+  adminLoginSchema,
+  registerSchema,
+  verifyOtpSchema,
+  resendOtpSchema,
+  updateBookingStatusSchema,
+} from './admin.schema';
 import { createHallSchema, updateHallSchema } from '../halls/hall.schema';
 
 const router = Router();
@@ -54,6 +63,9 @@ const upload = multer({
 });
 
 // Public Auth routes
+router.post('/auth/send-otp', validateRequest(adminLoginSchema), handleInitiateLogin);
+router.post('/auth/verify-otp', validateRequest(verifyOtpSchema), handleVerifyOtp);
+router.post('/auth/resend-otp', validateRequest(resendOtpSchema), handleResendOtp);
 router.post('/auth/login', validateRequest(adminLoginSchema), handleAdminLogin);
 router.post('/auth/register', validateRequest(registerSchema), handleRegister);
 router.post('/auth/logout', handleAdminLogout);

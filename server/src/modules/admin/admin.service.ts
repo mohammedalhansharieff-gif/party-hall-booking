@@ -4,6 +4,93 @@ import { prisma } from '../../config/db';
 import { ENV } from '../../config/env';
 import { formatHall } from '../halls/hall.service';
 import { sendBookingConfirmedEmail, sendBookingCancelledEmail } from '../../services/email.service';
+import { createAndSendOtp, verifyOtpCode } from '../../services/otp.service';
+
+export const validateCredentialsAndSendOtp = async (email: string, password: string) => {
+  const admin = await prisma.adminUser.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  });
+
+  if (!admin) {
+    throw new Error('Invalid email or password');
+  }
+
+  const isMatch = await bcrypt.compare(password, admin.passwordHash);
+  if (!isMatch) {
+    throw new Error('Invalid email or password');
+  }
+
+  const user = {
+    id: admin.id,
+    email: admin.email,
+    name: admin.name,
+    role: admin.role,
+  };
+
+  const otp = await createAndSendOtp(admin.email, user);
+
+  return {
+    email: admin.email,
+    name: admin.name,
+    otp,
+  };
+};
+
+export const verifyOtpAndGenerateToken = async (email: string, otp: string) => {
+  const result = verifyOtpCode(email, otp);
+
+  if (!result.success || !result.user) {
+    throw new Error(result.error || 'Invalid verification code');
+  }
+
+  const user = result.user;
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    ENV.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+
+  return {
+    admin: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+    token,
+  };
+};
+
+export const resendOtpForUser = async (email: string) => {
+  const admin = await prisma.adminUser.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  });
+
+  if (!admin) {
+    throw new Error('No account found with this email');
+  }
+
+  const user = {
+    id: admin.id,
+    email: admin.email,
+    name: admin.name,
+    role: admin.role,
+  };
+
+  const otp = await createAndSendOtp(admin.email, user);
+
+  return {
+    email: admin.email,
+    name: admin.name,
+    otp,
+  };
+};
 
 export const adminLogin = async (email: string, password: string) => {
   const admin = await prisma.adminUser.findUnique({
@@ -27,7 +114,7 @@ export const adminLogin = async (email: string, password: string) => {
       role: admin.role,
     },
     ENV.JWT_SECRET,
-    { expiresIn: '8h' }
+    { expiresIn: '30d' }
   );
 
   return {

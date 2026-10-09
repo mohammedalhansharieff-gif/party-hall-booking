@@ -15,6 +15,19 @@ export const registerSchema = z.object({
   }),
 });
 
+export const verifyOtpSchema = z.object({
+  body: z.object({
+    email: z.string().email('Valid email is required'),
+    otp: z.string().regex(/^\d{6}$/, 'Verification code must be exactly 6 digits'),
+  }),
+});
+
+export const resendOtpSchema = z.object({
+  body: z.object({
+    email: z.string().email('Valid email is required'),
+  }),
+});
+
 export const updateBookingStatusSchema = z.object({
   params: z.object({
     id: z.string().regex(/^\d+$/, 'Booking ID must be numeric'),
