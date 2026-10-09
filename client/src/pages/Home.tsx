@@ -261,7 +261,7 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Frequently Asked Questions (FAQ) */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="faq" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="inline-flex items-center space-x-2 bg-[#F9F0D3]/90 border border-[#E7CA70]/70 px-4 py-1.5 rounded-full text-[#835D12] text-xs font-semibold uppercase tracking-wider shadow-sm mb-3">
             <HelpCircle className="w-3.5 h-3.5 text-[#A17619]" />
