@@ -82,11 +82,11 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <Link
-                to="/admin/login"
-                className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-indigo-600 font-medium px-2.5 py-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                to="/login"
+                className="inline-flex items-center space-x-1.5 text-xs text-[#835D12] hover:text-[#5B3E05] font-semibold px-3 py-1.5 rounded-lg border border-[#E7CA70]/50 bg-white/70 hover:bg-white shadow-2xs transition-all"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin Login</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-[#A17619]" />
+                <span>Sign In</span>
               </Link>
             )}
 
@@ -155,11 +155,11 @@ export const Navbar: React.FC = () => {
             </>
           ) : (
             <Link
-              to="/admin/login"
+              to="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-semibold text-slate-500 hover:bg-slate-100"
+              className="block px-3 py-2 rounded-lg text-base font-semibold text-[#835D12] hover:bg-amber-50/70"
             >
-              Admin Login
+              Sign In
             </Link>
           )}
         </div>

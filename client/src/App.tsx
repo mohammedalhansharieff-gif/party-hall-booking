@@ -15,6 +15,7 @@ import { AdminBookings } from './pages/admin/AdminBookings';
 import { AdminHalls } from './pages/admin/AdminHalls';
 import { AnimatedGradient } from './components/ui/animated-gradient';
 import AnimatedGradientDemo from './components/ui/demo';
+import { SignInCard2 } from './components/ui/sign-in-card-2';
 import { useAuthStore } from './store/authStore';
 
 const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -71,10 +72,13 @@ export const App: React.FC = () => {
           <Route path="/book" element={<BookingPage />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/check-booking" element={<CheckBooking />} />
+          <Route path="/login" element={<SignInCard2 />} />
           <Route path="/demo/gradient" element={<AnimatedGradientDemo />} />
+          <Route path="/demo/sign-in" element={<SignInCard2 />} />
 
           {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<SignInCard2 />} />
+          <Route path="/admin/legacy-login" element={<AdminLogin />} />
           <Route
             path="/admin"
             element={

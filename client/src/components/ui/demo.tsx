@@ -158,3 +158,5 @@ export default function AnimatedGradientDemo() {
     </AnimatedGradient>
   );
 }
+
+export { DemoOne } from './sign-in-demo';
