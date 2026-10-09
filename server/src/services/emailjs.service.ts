@@ -36,6 +36,11 @@ export const sendEmailJsOtp = async (
       recipient_email: toEmail,
       user_email: toEmail,
       to: toEmail,
+      customer_email: toEmail,
+      client_email: toEmail,
+      send_to: toEmail,
+      from_email: toEmail,
+      reply_to: toEmail,
 
       // Recipient name aliases
       to_name: name || 'Valued Guest',
@@ -58,7 +63,6 @@ export const sendEmailJsOtp = async (
       // Brand and contact metadata
       from_name: 'GrandVenues Reservations',
       company_name: 'GrandVenues',
-      reply_to: 'support@grandvenues.com',
       message: `Your GrandVenues 6-digit verification code is: ${otp}. This code is valid for 5 minutes.`,
     };
 
