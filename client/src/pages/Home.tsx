@@ -10,7 +10,17 @@ import {
   Clock,
   Star,
   CheckCircle,
+  ChevronDown,
+  HelpCircle,
+  Phone,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Send,
+  Building2,
+  Compass,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getHalls } from '../api/halls.api';
 import { Hall } from '../types';
 import { HallCard } from '../components/halls/HallCard';
@@ -19,6 +29,10 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 export const Home: React.FC = () => {
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
 
   useEffect(() => {
     const fetchHalls = async () => {
@@ -33,6 +47,45 @@ export const Home: React.FC = () => {
     };
     fetchHalls();
   }, []);
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName || !contactEmail || !contactMessage) {
+      toast.error('Please fill in all inquiry fields');
+      return;
+    }
+    toast.success('Thank you! Our venue concierge will reach out to you within 2 hours.');
+    setContactName('');
+    setContactEmail('');
+    setContactMessage('');
+  };
+
+  const faqs = [
+    {
+      q: 'How do the slot choices (Morning, Evening, Full Day) work?',
+      a: 'We offer three distinct booking slots: Morning (09:00 AM – 02:00 PM), Evening (06:00 PM – 11:00 PM), and Full Day (09:00 AM – 11:00 PM). Selecting a Full Day booking automatically locks out both Morning and Evening slots for that date across the system to prevent scheduling overlaps.',
+    },
+    {
+      q: 'How does the double-booking collision guard protect my reservation?',
+      a: 'Our booking engine uses atomic ACID database transactions with row-level locks. The moment you initiate checkout, your desired slot is reserved. If another client attempts to book the same slot simultaneously, the collision guard safely prevents double-charging and confirms the first submission.',
+    },
+    {
+      q: 'Can I inspect or tour the hall before completing advance payment?',
+      a: 'Absolutely! You can place a tentative booking hold online with the "Pay at Venue" option. Our venue managers are available daily from 09:00 AM to 08:00 PM for guided in-person walkthroughs of the bridal suites, sound systems, dining seating, and stage illumination.',
+    },
+    {
+      q: 'What amenities are included in the hall booking tariff?',
+      a: 'Every venue tariff includes central air conditioning, 100% generator power backup, stage lighting, wireless microphones, bridal dressing rooms, and guest valet parking. Custom decor, stage themes, and catering packages can be tailored with our in-house partners.',
+    },
+    {
+      q: 'How can I check status or reschedule my booking?',
+      a: 'You can check your reservation details anytime using the "Track My Booking" portal with your unique Reference Number (e.g., HALL-2026-XXXXX). Cancellations submitted at least 14 days before the event are eligible for full refunds or complimentary date transfers.',
+    },
+    {
+      q: 'Which payment methods are accepted?',
+      a: 'We accept all major Credit/Debit Cards, UPI, Net Banking, and Bank Transfers through encrypted gateways, as well as cash and card payments directly at the venue desk prior to the event.',
+    },
+  ];
 
   return (
     <div className="space-y-24 pb-20">
@@ -87,14 +140,13 @@ export const Home: React.FC = () => {
             </div>
           </div>
         </div>
-
       </section>
 
       {/* Featured Halls */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
           <div>
-            <span className="text-xs font-bold tracking-widest uppercase text-indigo-600 block mb-2">
+            <span className="text-xs font-bold tracking-widest uppercase text-[#835D12] block mb-2">
               Signature Venues
             </span>
             <h2 className="font-serif text-3xl font-bold text-slate-900">
@@ -103,7 +155,7 @@ export const Home: React.FC = () => {
           </div>
           <Link
             to="/halls"
-            className="inline-flex items-center space-x-1 text-sm font-semibold text-indigo-600 hover:text-indigo-700 mt-4 md:mt-0 group"
+            className="inline-flex items-center space-x-1 text-sm font-semibold text-[#835D12] hover:text-[#A17619] mt-4 md:mt-0 group"
           >
             <span>View All Venues</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -121,62 +173,10 @@ export const Home: React.FC = () => {
         )}
       </section>
 
-      {/* How It Works */}
-      <section className="bg-slate-900 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold tracking-widest uppercase text-indigo-400 block mb-2">
-              Effortless Reservations
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold">
-              How GrandVenues Booking Works
-            </h2>
-            <p className="text-slate-400 text-sm mt-3">
-              Book your dream venue in 3 simple steps without visiting physical offices or waiting in lines.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Step 1 */}
-            <div className="bg-slate-800/80 border border-slate-700/60 p-8 rounded-2xl relative space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-600/30 border border-indigo-500 text-indigo-400 flex items-center justify-center font-bold text-lg">
-                01
-              </div>
-              <h3 className="font-serif text-xl font-bold">Choose Hall & Date</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Explore hall capacities, photos, and amenities. Pick your desired event date to view live availability across Morning, Evening, or Full Day slots.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="bg-slate-800/80 border border-slate-700/60 p-8 rounded-2xl relative space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-600/30 border border-indigo-500 text-indigo-400 flex items-center justify-center font-bold text-lg">
-                02
-              </div>
-              <h3 className="font-serif text-xl font-bold">Instant Slot Hold</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Lock your desired time slot instantly. Our automated concurrency engine prevents double bookings and guarantees zero overlaps.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="bg-slate-800/80 border border-slate-700/60 p-8 rounded-2xl relative space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-600/30 border border-indigo-500 text-indigo-400 flex items-center justify-center font-bold text-lg">
-                03
-              </div>
-              <h3 className="font-serif text-xl font-bold">Confirmation & Passes</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Receive booking reference receipts directly via email. Pay securely online or settle at the venue manager desk before the celebration.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="text-xs font-bold tracking-widest uppercase text-indigo-600 block mb-2">
+          <span className="text-xs font-bold tracking-widest uppercase text-[#835D12] block mb-2">
             Client Stories
           </span>
           <h2 className="font-serif text-3xl font-bold text-slate-900">
@@ -185,7 +185,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-[#FCFAF7] p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E7CA70]/60 transition-colors space-y-4">
+          <div className="bg-[#FCFAF7]/90 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E7CA70]/60 transition-all space-y-4">
             <div className="flex text-amber-500 space-x-1">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-500" />
@@ -200,7 +200,7 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-[#FCFAF7] p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E7CA70]/60 transition-colors space-y-4">
+          <div className="bg-[#FCFAF7]/90 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E7CA70]/60 transition-all space-y-4">
             <div className="flex text-amber-500 space-x-1">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-500" />
@@ -215,7 +215,7 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-[#FCFAF7] p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E7CA70]/60 transition-colors space-y-4">
+          <div className="bg-[#FCFAF7]/90 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:border-[#E7CA70]/60 transition-all space-y-4">
             <div className="flex text-amber-500 space-x-1">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-4 h-4 fill-amber-500" />
@@ -228,6 +228,239 @@ export const Home: React.FC = () => {
               <p className="font-bold text-slate-900 text-sm">Kavita Iyer</p>
               <p className="text-xs text-slate-400">Engagement Ceremony</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How GrandVenues Booking Works (Moved to Bottom & Styled to match Beige Theme) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="inline-flex items-center space-x-2 bg-[#F9F0D3]/90 border border-[#E7CA70]/70 px-4 py-1.5 rounded-full text-[#835D12] text-xs font-semibold uppercase tracking-wider shadow-sm mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-[#A17619]" />
+            <span>Effortless 3-Step Process</span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
+            How GrandVenues Booking Works
+          </h2>
+          <p className="text-slate-600 text-sm mt-3 leading-relaxed">
+            Reserve your celebration venue smoothly without physical office visits or waiting in lines.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Step 1 */}
+          <div className="bg-white/85 hover:bg-white backdrop-blur-md border border-amber-900/10 hover:border-[#E7CA70]/70 p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 space-y-4 group">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#835D12] to-[#C39626] text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
+              01
+            </div>
+            <h3 className="font-serif text-xl font-bold text-slate-900">Choose Hall & Date</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Explore hall capacities, photos, and amenities. Pick your desired event date to view live availability across Morning, Evening, or Full Day slots.
+            </p>
+          </div>
+
+          {/* Step 2 */}
+          <div className="bg-white/85 hover:bg-white backdrop-blur-md border border-amber-900/10 hover:border-[#E7CA70]/70 p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 space-y-4 group">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#835D12] to-[#C39626] text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
+              02
+            </div>
+            <h3 className="font-serif text-xl font-bold text-slate-900">Instant Slot Hold</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Lock your desired time slot instantly. Our automated concurrency engine prevents double bookings and guarantees zero overlaps.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div className="bg-white/85 hover:bg-white backdrop-blur-md border border-amber-900/10 hover:border-[#E7CA70]/70 p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 space-y-4 group">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#835D12] to-[#C39626] text-white flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
+              03
+            </div>
+            <h3 className="font-serif text-xl font-bold text-slate-900">Confirmation & Passes</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Receive booking reference receipts directly via email. Pay securely online or settle at the venue manager desk before the celebration.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Frequently Asked Questions (FAQ) */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <div className="inline-flex items-center space-x-2 bg-[#F9F0D3]/90 border border-[#E7CA70]/70 px-4 py-1.5 rounded-full text-[#835D12] text-xs font-semibold uppercase tracking-wider shadow-sm mb-3">
+            <HelpCircle className="w-3.5 h-3.5 text-[#A17619]" />
+            <span>Got Questions?</span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-slate-600 text-sm mt-3">
+            Everything you need to know about slot reservations, policies, and hall amenities.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {faqs.map((faq, index) => {
+            const isOpen = openFaq === index;
+            return (
+              <div
+                key={index}
+                className="bg-white/85 backdrop-blur-md border border-amber-900/10 rounded-2xl overflow-hidden transition-all shadow-sm hover:border-[#E7CA70]/60"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(isOpen ? null : index)}
+                  className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-serif font-bold text-slate-900 hover:text-[#835D12] transition-colors"
+                >
+                  <span className="text-base sm:text-lg">{faq.q}</span>
+                  <ChevronDown
+                    className={`w-5 h-5 text-[#835D12] transition-transform duration-300 shrink-0 ${
+                      isOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-6 pb-5 pt-1 text-slate-600 text-sm leading-relaxed border-t border-amber-900/5">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Contact Information & Help Desk */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="inline-flex items-center space-x-2 bg-[#F9F0D3]/90 border border-[#E7CA70]/70 px-4 py-1.5 rounded-full text-[#835D12] text-xs font-semibold uppercase tracking-wider shadow-sm mb-3">
+            <Building2 className="w-3.5 h-3.5 text-[#A17619]" />
+            <span>We Are Here To Help</span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
+            Contact Venue Concierge & Support
+          </h2>
+          <p className="text-slate-600 text-sm mt-3">
+            Schedule an in-person hall walkthrough, request custom decor pricing, or speak with our event coordinators.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Contact Details Cards */}
+          <div className="space-y-4 lg:col-span-1">
+            <div className="bg-white/85 backdrop-blur-md border border-amber-900/10 p-6 rounded-2xl shadow-sm space-y-2 hover:border-[#E7CA70]/60 transition-colors">
+              <div className="flex items-center space-x-3 text-[#835D12]">
+                <div className="w-10 h-10 rounded-xl bg-[#F9F0D3] flex items-center justify-center">
+                  <Phone className="w-5 h-5 text-[#A17619]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">Direct Helpline</h4>
+                  <p className="text-xs text-slate-500">Toll-free / Central Desk</p>
+                </div>
+              </div>
+              <p className="text-slate-800 font-semibold text-base pt-2">
+                <a href="tel:+918004567890" className="hover:text-[#A17619] transition-colors">
+                  +91 (800) 456-7890
+                </a>
+              </p>
+              <p className="text-xs text-slate-500">Available Mon – Sun: 08:00 AM – 09:00 PM</p>
+            </div>
+
+            <div className="bg-white/85 backdrop-blur-md border border-amber-900/10 p-6 rounded-2xl shadow-sm space-y-2 hover:border-[#E7CA70]/60 transition-colors">
+              <div className="flex items-center space-x-3 text-[#835D12]">
+                <div className="w-10 h-10 rounded-xl bg-[#F9F0D3] flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-[#A17619]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">Email Inquiries</h4>
+                  <p className="text-xs text-slate-500">Reservations & Custom Quotes</p>
+                </div>
+              </div>
+              <p className="text-slate-800 font-semibold text-sm pt-2">
+                <a href="mailto:reservations@grandvenues.com" className="hover:text-[#A17619] transition-colors">
+                  reservations@grandvenues.com
+                </a>
+              </p>
+              <p className="text-xs text-slate-500">Typical response time: under 2 hours</p>
+            </div>
+
+            <div className="bg-white/85 backdrop-blur-md border border-amber-900/10 p-6 rounded-2xl shadow-sm space-y-2 hover:border-[#E7CA70]/60 transition-colors">
+              <div className="flex items-center space-x-3 text-[#835D12]">
+                <div className="w-10 h-10 rounded-xl bg-[#F9F0D3] flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-[#A17619]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-sm">Central Venue Office</h4>
+                  <p className="text-xs text-slate-500">Walkthroughs & Physical Desk</p>
+                </div>
+              </div>
+              <p className="text-slate-700 text-xs leading-relaxed pt-2">
+                Premier Convention Center Road, Central City, 560001
+              </p>
+              <p className="text-xs text-slate-500">Walk-in tours daily: 09:00 AM – 08:00 PM</p>
+            </div>
+          </div>
+
+          {/* Direct Consultation Request Form */}
+          <div className="lg:col-span-2 bg-white/90 backdrop-blur-md border border-amber-900/10 p-8 sm:p-10 rounded-2xl shadow-sm">
+            <h3 className="font-serif text-2xl font-bold text-slate-900 mb-2">
+              Have A Custom Event In Mind?
+            </h3>
+            <p className="text-slate-600 text-sm mb-6">
+              Send us your requirements and our venue director will provide availability options and customized estimates.
+            </p>
+
+            <form onSubmit={handleContactSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Rahul Sharma"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#C39626] text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@example.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#C39626] text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                  Event Details or Questions
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Tell us about your event date, estimated guests, catering preferences, or questions..."
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-[#C39626] text-sm resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-[#A17619] via-[#B88924] to-[#C39626] hover:brightness-105 text-white font-semibold px-8 py-3.5 rounded-xl shadow-md shadow-amber-900/15 transition-all active:scale-95 text-sm"
+              >
+                <span>Send Inquiry to Venue Desk</span>
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
           </div>
         </div>
       </section>
