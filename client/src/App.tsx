@@ -16,7 +16,6 @@ import { AdminHalls } from './pages/admin/AdminHalls';
 import { AnimatedGradient } from './components/ui/animated-gradient';
 import AnimatedGradientDemo from './components/ui/demo';
 import { SignInCard2 } from './components/ui/sign-in-card-2';
-import { Default as SpotlightDemo } from './components/ui/spotlight-demo';
 import { useAuthStore } from './store/authStore';
 
 export const App: React.FC = () => {
@@ -125,7 +124,6 @@ export const App: React.FC = () => {
           <Route path="/check-booking" element={<CheckBooking />} />
           <Route path="/demo/gradient" element={<AnimatedGradientDemo />} />
           <Route path="/demo/sign-in" element={<SignInCard2 />} />
-          <Route path="/demo/spotlight" element={<SpotlightDemo />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminDashboard />} />
