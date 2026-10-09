@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Hall {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String?
+  capacity     Int
+  location     String?
+  pricePerSlot Float
+  images       String         @default("[]") // JSON string of array
+  amenities    String         @default("[]") // JSON string of array
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  bookings     Booking[]
+  timeSlots    HallTimeSlot[]
+}
+
+model TimeSlot {
+  id           Int            @id @default(autoincrement())
+  label        String         // "Morning", "Evening", "Full Day"
+  startTime    String         // "09:00"
+  endTime      String         // "14:00"
+  defaultPrice Float          @default(15000)
+
+  hallSlots    HallTimeSlot[]
+  bookings     Booking[]
+}
+
+model HallTimeSlot {
+  id         Int      @id @default(autoincrement())
+  hallId     Int
+  timeSlotId Int
+  price      Float?   // Override price for specific slot
+
+  hall       Hall     @relation(fields: [hallId], references: [id], onDelete: Cascade)
+  timeSlot   TimeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+
+  @@unique([hallId, timeSlotId])
+}
+
+model Booking {
+  id              Int           @id @default(autoincrement())
+  bookingRef      String        @unique // e.g. "HALL-2026-X8P2K"
+  hallId          Int
+  timeSlotId      Int
+  date            DateTime      // The event date (date only, 00:00:00 UTC)
+  status          String        @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED
+
+  // Customer Info
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  guestCount      Int?
+  specialRequests String?
+
+  // Payment
+  totalAmount     Float
+  paymentStatus   String        @default("UNPAID") // UNPAID, PAID, REFUNDED
+  paymentId       String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  hall            Hall          @relation(fields: [hallId], references: [id])
+  timeSlot        TimeSlot      @relation(fields: [timeSlotId], references: [id])
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("STAFF") // SUPER_ADMIN, STAFF
+  createdAt    DateTime @default(now())
+}
