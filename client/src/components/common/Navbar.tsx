@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate('/login');
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -64,31 +64,24 @@ export const Navbar: React.FC = () => {
             </Link>
 
             {admin ? (
-              <div className="flex items-center space-x-4 pl-4 border-l border-slate-200">
+              <div className="flex items-center space-x-3 pl-4 border-l border-slate-200">
                 <Link
                   to="/admin"
-                  className="inline-flex items-center space-x-1.5 bg-indigo-50 text-indigo-700 px-3.5 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+                  className="inline-flex items-center space-x-1.5 bg-[#FAF7F2] border border-[#E7CA70]/60 text-[#835D12] px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-amber-100/50 transition-colors"
                 >
-                  <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#A17619]" />
                   <span>Admin Panel</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                  className="inline-flex items-center space-x-1 text-slate-500 hover:text-rose-600 transition-colors px-2 py-1.5 rounded-lg hover:bg-rose-50 text-xs font-semibold"
                   title="Logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Logout</span>
                 </button>
               </div>
-            ) : (
-              <Link
-                to="/login"
-                className="inline-flex items-center space-x-1.5 text-xs text-[#835D12] hover:text-[#5B3E05] font-semibold px-3 py-1.5 rounded-lg border border-[#E7CA70]/50 bg-white/70 hover:bg-white shadow-2xs transition-all"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-[#A17619]" />
-                <span>Sign In</span>
-              </Link>
-            )}
+            ) : null}
 
             <Link
               to="/halls"
@@ -139,7 +132,7 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-semibold text-indigo-600 hover:bg-indigo-50"
+                className="block px-3 py-2 rounded-lg text-base font-semibold text-[#835D12] hover:bg-amber-50"
               >
                 Admin Panel
               </Link>

@@ -1,9 +1,9 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Castle, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 
@@ -27,13 +27,23 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 
 export function Component() {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const location = useLocation();
+  const { login, token } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("admin@hallbooking.com");
   const [password, setPassword] = useState("admin123");
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
+
+  const destination = (location.state as any)?.from?.pathname || '/';
+
+  // If user is already logged in, automatically proceed to website
+  useEffect(() => {
+    if (token) {
+      navigate(destination, { replace: true });
+    }
+  }, [token, navigate, destination]);
 
   // For 3D card effect - increased rotation range for more pronounced 3D effect
   const mouseX = useMotionValue(0);
@@ -57,8 +67,8 @@ export function Component() {
     setIsLoading(true);
     try {
       await login(email, password);
-      toast.success('Welcome back to GrandVenues!');
-      navigate('/admin');
+      toast.success('Welcome to GrandVenues!');
+      navigate(destination, { replace: true });
     } catch (err: any) {
       toast.error(err.message || 'Login failed. Please verify credentials.');
     } finally {

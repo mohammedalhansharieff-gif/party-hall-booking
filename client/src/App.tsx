@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
@@ -18,30 +18,70 @@ import AnimatedGradientDemo from './components/ui/demo';
 import { SignInCard2 } from './components/ui/sign-in-card-2';
 import { useAuthStore } from './store/authStore';
 
-const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isLoading } = useAuthStore();
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (!token) {
-    return <Navigate to="/admin/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
 export const App: React.FC = () => {
-  const { checkAuth } = useAuthStore();
+  const { token, checkAuth } = useAuthStore();
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login' || location.pathname === '/admin/login';
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  // Gatekeeper: If user is not logged in, redirect them immediately to the login page
+  if (!token && !isLoginPage) {
+    return (
+      <>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1E1610',
+              color: '#FAF7F2',
+              border: '1px solid rgba(195, 150, 38, 0.3)',
+              borderRadius: '12px',
+              fontSize: '13px',
+            },
+          }}
+        />
+        <Routes>
+          <Route path="/login" element={<SignInCard2 />} />
+          <Route path="*" element={<Navigate to="/login" state={{ from: location }} replace />} />
+        </Routes>
+      </>
+    );
+  }
+
+  // If visiting the login page standalone
+  if (isLoginPage) {
+    return (
+      <>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1E1610',
+              color: '#FAF7F2',
+              border: '1px solid rgba(195, 150, 38, 0.3)',
+              borderRadius: '12px',
+              fontSize: '13px',
+            },
+          }}
+        />
+        <Routes>
+          <Route path="/login" element={<SignInCard2 />} />
+          <Route path="/admin/login" element={<SignInCard2 />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </>
+    );
+  }
+
+  // Authenticated: The entire website is accessible with luxury styling, navigation, and footer
   return (
     <div className="min-h-screen flex flex-col bg-[#F5EDE0] font-sans text-slate-800 relative">
-      {/* Last layer background for all in rich viscous luxury beige */}
+      {/* Background silk gradient */}
       <AnimatedGradient
         variant="beige"
         speed={0.25}
@@ -65,46 +105,23 @@ export const App: React.FC = () => {
       <Navbar />
       <main className="flex-1 relative z-10">
         <Routes>
-          {/* Public Routes */}
+          {/* Main Website Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/halls" element={<Halls />} />
           <Route path="/halls/:id" element={<HallDetail />} />
           <Route path="/book" element={<BookingPage />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/check-booking" element={<CheckBooking />} />
-          <Route path="/login" element={<SignInCard2 />} />
           <Route path="/demo/gradient" element={<AnimatedGradientDemo />} />
           <Route path="/demo/sign-in" element={<SignInCard2 />} />
 
           {/* Admin Routes */}
-          <Route path="/admin/login" element={<SignInCard2 />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/bookings" element={<AdminBookings />} />
+          <Route path="/admin/halls" element={<AdminHalls />} />
           <Route path="/admin/legacy-login" element={<AdminLogin />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedAdminRoute>
-                <AdminDashboard />
-              </ProtectedAdminRoute>
-            }
-          />
-          <Route
-            path="/admin/bookings"
-            element={
-              <ProtectedAdminRoute>
-                <AdminBookings />
-              </ProtectedAdminRoute>
-            }
-          />
-          <Route
-            path="/admin/halls"
-            element={
-              <ProtectedAdminRoute>
-                <AdminHalls />
-              </ProtectedAdminRoute>
-            }
-          />
 
-          {/* Fallback */}
+          {/* Fallback to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

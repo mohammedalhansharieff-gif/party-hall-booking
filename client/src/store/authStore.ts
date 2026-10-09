@@ -11,24 +11,45 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
+// Synchronously restore session from localStorage so refresh never kicks the user out
+const getInitialAuth = () => {
+  const token = localStorage.getItem('admin_token');
+  let admin: AdminUser | null = null;
+  if (token) {
+    try {
+      const stored = localStorage.getItem('admin_user');
+      if (stored) {
+        admin = JSON.parse(stored);
+      }
+    } catch {
+      admin = null;
+    }
+  }
+  return { token, admin };
+};
+
+const initialAuth = getInitialAuth();
+
 export const useAuthStore = create<AuthState>((set) => ({
-  admin: null,
-  token: localStorage.getItem('admin_token'),
-  isLoading: true,
+  admin: initialAuth.admin,
+  token: initialAuth.token,
+  isLoading: false,
 
   login: async (email, password) => {
     const { admin, token } = await apiLogin(email, password);
     localStorage.setItem('admin_token', token);
+    localStorage.setItem('admin_user', JSON.stringify(admin));
     set({ admin, token, isLoading: false });
   },
 
   logout: async () => {
     try {
       await apiLogout();
-    } catch (e) {
+    } catch {
       // ignore
     }
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
     set({ admin: null, token: null, isLoading: false });
   },
 
@@ -41,9 +62,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     try {
       const admin = await getAdminProfile();
+      localStorage.setItem('admin_user', JSON.stringify(admin));
       set({ admin, token, isLoading: false });
     } catch {
       localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
       set({ admin: null, token: null, isLoading: false });
     }
   },
